@@ -1,36 +1,278 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DFacturas
 
-## Getting Started
+A role-aware logistics dispatch application built with **Next.js, TypeScript, Supabase and PostgreSQL**. DFacturas models a real operational workflow in which an invoice is scanned once to begin dispatch handling and scanned again to complete it, while administrative users manage catalogs, analytics and audit history.
 
-First, run the development server:
+The project is designed as a portfolio-grade application with an emphasis on **domain rules, authorization at the data layer, traceability, transactional RPCs and maintainable separation of concerns**.
+
+> The interface currently keeps the operational product label **“Facturación V2”** while the repository/codebase is named **DFacturas**.
+
+## Highlights
+
+- 20-digit invoice scanning workflow: first scan starts a dispatch, second scan finalizes it.
+- Dispatch states: `ATENDIENDO`, `DESPACHADA`, `PEDIDO_CANCELADO`.
+- Role model with `ADMIN` and `OPERATIVO` profiles.
+- Server-side route guards plus PostgreSQL Row Level Security (RLS).
+- Critical mutations executed through PostgreSQL RPCs instead of unrestricted table writes.
+- Soft-delete semantics for operational history.
+- Audit log for sensitive table changes.
+- Admin dashboard with date ranges, cross-filters, operational KPIs, charts and Excel export.
+- Catalog management for responsables, carriers, vehicles, companies and routes.
+- Special `CLIENTE RETIRA` workflow enforced as a domain invariant rather than by display text alone.
+- Safe application error mapping that avoids exposing raw PostgreSQL/Supabase errors to users.
+- Unit tests for auth and dispatch domain rules, plus a SQL hardening verifier.
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 16.3.8 (App Router) |
+| UI | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts |
+| Language | TypeScript 5.9 |
+| Validation | Zod 4 |
+| Auth / Data | Supabase Auth + PostgreSQL |
+| Database security | RLS, grants, security-definer RPCs, constraints, triggers |
+| Testing | Vitest 5 |
+| Deployment target | Vercel + Supabase |
+
+## Functional modules
+
+The main navigation exposes five operational modules:
+
+1. **Dashboard** — admin analytics, KPIs, charts, filters and Excel export.
+2. **Despacho** — invoice scan workflow, history, cancellation and correction flows.
+3. **Responsables** — operational personnel catalog; all active users can read it, while mutations remain admin-protected at the database layer.
+4. **Transportistas** — carrier and vehicle catalog with controlled RPC-based mutations.
+5. **Configuración** — admin-only company and route administration.
+
+An internal `/admin/auditoria` route is also available to `ADMIN` users for audit inspection; it is intentionally not a sixth top-level navigation module.
+
+## Architecture
+
+DFacturas uses a layered, feature-oriented structure:
+
+```text
+Next.js routes / layouts
+        ↓
+Feature components
+        ↓
+Services / use-case orchestration
+        ↓
+Pure domain rules + Zod boundaries
+        ↓
+Repositories
+        ↓
+Supabase client
+        ↓
+PostgreSQL (RLS + RPC + constraints + triggers)
+```
+
+The important rule is that **UI visibility is not authorization**. Components may hide or disable actions according to role, but PostgreSQL remains the security boundary for protected data and critical writes.
+
+See [Architecture](docs/architecture.md) for the design rationale and concrete code examples.
+
+## Engineering principles in the codebase
+
+The project does not treat architectural labels as decoration. The repository demonstrates them through concrete boundaries:
+
+- **Single Responsibility / SOLID-oriented design:** domain rules, service orchestration, repositories, validation and UI are kept in distinct modules.
+- **DRY:** shared authorization helpers, error translation, constants, repository mappings and reusable UI primitives avoid duplicated business behavior.
+- **Separation of Concerns:** React components do not own PostgreSQL authorization rules; repositories do not render UI; domain functions do not depend on React or Supabase.
+- **Single Source of Truth:** database constraints and RPCs enforce critical dispatch invariants even when a client is bypassed.
+- **Atomic Design-inspired composition:** reusable low-level UI primitives live in `src/components/ui`, application-level composites in `src/components/app`, and domain-specific compositions inside `src/features/*/components`.
+- **Least privilege:** anonymous access is revoked, direct writes are limited, privileged RPCs validate role/state, and internal validators are not executable by authenticated clients.
+
+## Project structure
+
+```text
+src/
+├─ app/                 Next.js routes, layouts and server boundaries
+├─ components/
+│  ├─ ui/               reusable UI primitives
+│  └─ app/              reusable application shell/navigation/dialogs
+├─ constants/           shared constants
+├─ domain/              pure domain rules and unit tests
+├─ features/            feature-specific UI and domain code
+├─ lib/                 Supabase clients, errors and utilities
+├─ repositories/        data access and RPC adapters
+├─ schemas/             Zod input validation
+├─ services/            use-case orchestration and access guards
+└─ types/               shared TypeScript contracts
+
+supabase/
+├─ migrations/          immutable forward-only schema history
+├─ tests/               read-only database hardening verification
+└─ seed/                intentionally contains no production data
+```
+
+## Database model
+
+Primary tables:
+
+- `profiles`
+- `responsables`
+- `companias`
+- `rutas`
+- `transportistas`
+- `vehiculos`
+- `despachos`
+- `audit_logs`
+
+Important database invariants include invoice format, active-invoice uniqueness, route/company consistency, vehicle/carrier consistency, state/timestamp consistency, cancellation reason requirements and soft-delete metadata requirements.
+
+See [Database](docs/database.md) for the relational model and migration strategy.
+
+## Security model
+
+DFacturas uses defense in depth:
+
+- Supabase Auth for authentication.
+- `profiles.role` and `profiles.active` for application authorization context.
+- RLS on all application tables.
+- Explicit grants/revokes for table and function privileges.
+- Critical dispatch mutations through RPCs.
+- `SECURITY DEFINER` functions with hardened `search_path` where privileged execution is required.
+- New auth profiles default to `OPERATIVO` **and inactive** as a defense-in-depth safeguard.
+- Public signup and anonymous sign-in are expected to be disabled in the deployed Supabase Auth configuration.
+- Soft-deleted dispatch rows are hidden from non-admin operational users.
+- Sensitive mutation history is recorded in `audit_logs`.
+- Browser code never requires a `service_role` or `sb_secret_*` key.
+
+See [Security](docs/security.md) for controls, threat boundaries and deployment settings.
+
+## Local setup
+
+### Requirements
+
+- Node.js `22.23.3` (see `.nvmrc`)
+- npm 10+
+- A Supabase project
+
+Clone the repository and install dependencies:
+
+```bash
+npm ci
+```
+
+Copy the public environment template:
+
+```bash
+cp .env.example .env.local
+```
+
+On PowerShell:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Configure only your own public Supabase project values:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+Never place `service_role`, `sb_secret_*`, database passwords, JWT signing secrets or private credentials in `NEXT_PUBLIC_*` variables.
+
+### Database
+
+Apply migrations in order from `supabase/migrations/`. Migrations `001` through `005` are forward-only project history and should not be edited after application.
+
+With an authenticated Supabase CLI environment you can first inspect the planned changes:
+
+```powershell
+npx --no-install supabase db push --dry-run
+```
+
+Then apply them only after confirming that the expected migration set is correct:
+
+```powershell
+npx --no-install supabase db push
+```
+
+Alternatively, apply the SQL through the Supabase SQL Editor in exact migration order.
+
+### Auth configuration
+
+For the intended closed-demo deployment:
+
+- Email/password authentication: enabled.
+- Public signups: disabled.
+- Anonymous sign-ins: disabled.
+- Manual identity linking: disabled unless explicitly required.
+- Rate limits: enabled.
+- CAPTCHA: optional; only enable after integrating it into the login flow.
+- Site URL: set to the final deployed URL.
+- Redirect URLs: keep the allow-list minimal.
+
+### Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality gates
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+npx tsc --noEmit
+npm run lint
+npm audit --omit=dev
+npm run build
+```
 
-## Learn More
+The validated pre-publication snapshot passed:
 
-To learn more about Next.js, take a look at the following resources:
+- **13/13 domain tests**
+- TypeScript check
+- ESLint
+- production dependency audit with **0 reported vulnerabilities**
+- Next.js production build using Webpack
+- pre-GitHub secret / sensitive-file gate
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A read-only database hardening verifier is included at:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+supabase/tests/20261004000005_security_hardening_verify.sql
+```
 
-## Deploy on Vercel
+See [Testing](docs/testing.md) for exactly what is and is not covered.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The intended production topology is:
+
+```text
+Browser
+   │
+   ▼
+Vercel / Next.js
+   │
+   ▼
+Supabase Auth + Data API
+   │
+   ▼
+PostgreSQL
+(RLS + RPC + constraints + audit)
+```
+
+See [Deployment](docs/deployment.md) for a release checklist.
+
+## Demo-data policy
+
+This repository must not contain production customer, employee, order, invoice or credential data. Use only fictional records in screenshots, local demos and test fixtures. The committed `supabase/seed` directory intentionally does not include production data.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Database](docs/database.md)
+- [Security](docs/security.md)
+- [Testing](docs/testing.md)
+- [Deployment](docs/deployment.md)
+- [Versión en español](README.es.md)
+
+## Scope notes
+
+DFacturas is a portfolio implementation focused on dispatch operations, authorization, auditability and maintainable application structure. It is not presented as a generic ERP, accounting engine or invoicing tax platform.
