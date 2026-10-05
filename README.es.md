@@ -1,11 +1,41 @@
 # DFacturas
+<!-- portfolio-badges-start -->
+
+![Next.js](https://img.shields.io/badge/Next.js-16.3.8-black?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)
+![Vitest](https://img.shields.io/badge/tests-13%2F13-passing?logo=vitest)
+![Security](https://img.shields.io/badge/auditoría%20producción-0%20vulnerabilidades-success)
+
+<!-- portfolio-badges-end -->
 
 Aplicación de control logístico de despachos construida con **Next.js, TypeScript, Supabase y PostgreSQL**. El flujo principal modela una operación real: el primer escaneo de una factura inicia su atención y el segundo la finaliza, mientras los usuarios administrativos gestionan catálogos, analítica y auditoría.
 
 El proyecto está preparado como portafolio técnico con énfasis en **reglas de dominio, autorización en la capa de datos, trazabilidad, RPC transaccionales y separación mantenible de responsabilidades**.
 
-> La interfaz conserva actualmente la etiqueta operativa **“Facturación V2”**, mientras que el repositorio y el código se denominan **DFacturas**.
+## Vista del producto
 
+<!-- product-preview-start -->
+
+### Analítica operativa
+
+El dashboard administrativo presenta KPIs, análisis por rango de fechas, distribución de despachos, rendimiento por rutas y ranking de responsables.
+
+![Dashboard administrativo de DFacturas](docs/images/dfacturas-dashboard.png)
+
+### Flujo de despacho
+
+El módulo operativo central gestiona escaneo de facturas, asignación de responsables y transportistas, compañía y ruta, transiciones de estado e historial en tiempo real.
+
+![Flujo de despacho de DFacturas](docs/images/dfacturas-dispatch.png)
+
+### Administración
+
+Los usuarios administrativos gestionan compañías y sus rutas asociadas desde una interfaz especializada.
+
+![Configuración de compañías y rutas en DFacturas](docs/images/dfacturas-configuration.png)
+
+<!-- product-preview-end -->
 ## Funcionalidad principal
 
 - Facturas de 20 dígitos.

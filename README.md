@@ -1,11 +1,41 @@
 # DFacturas
+<!-- portfolio-badges-start -->
+
+![Next.js](https://img.shields.io/badge/Next.js-16.3.8-black?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)
+![Vitest](https://img.shields.io/badge/tests-13%2F13-passing?logo=vitest)
+![Security](https://img.shields.io/badge/production%20audit-0%20vulnerabilities-success)
+
+<!-- portfolio-badges-end -->
 
 A role-aware logistics dispatch application built with **Next.js, TypeScript, Supabase and PostgreSQL**. DFacturas models a real operational workflow in which an invoice is scanned once to begin dispatch handling and scanned again to complete it, while administrative users manage catalogs, analytics and audit history.
 
 The project is designed as a portfolio-grade application with an emphasis on **domain rules, authorization at the data layer, traceability, transactional RPCs and maintainable separation of concerns**.
 
-> The interface currently keeps the operational product label **“Facturación V2”** while the repository/codebase is named **DFacturas**.
+## Product preview
 
+<!-- product-preview-start -->
+
+### Operational analytics
+
+The administrative dashboard provides operational KPIs, date-range analysis, dispatch distribution, route performance and responsible-person rankings.
+
+![DFacturas administrative dashboard](docs/images/dfacturas-dashboard.png)
+
+### Dispatch workflow
+
+The central operational module handles invoice scanning, responsible/carrier assignment, company and route context, dispatch state transitions and real-time history.
+
+![DFacturas dispatch workflow](docs/images/dfacturas-dispatch.png)
+
+### Administration
+
+Administrative users manage companies and their associated routes through a focused configuration interface.
+
+![DFacturas company and route configuration](docs/images/dfacturas-configuration.png)
+
+<!-- product-preview-end -->
 ## Highlights
 
 - 20-digit invoice scanning workflow: first scan starts a dispatch, second scan finalizes it.

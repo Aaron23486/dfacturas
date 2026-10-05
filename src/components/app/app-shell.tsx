@@ -61,7 +61,7 @@ export function AppShell({
         <div className="relative mx-auto flex min-h-14 max-w-[1900px] items-center gap-4 px-4">
           <Link href="/app" className="mr-2 shrink-0">
             <p className="text-sm font-bold tracking-tight text-slate-100">
-              Facturación V2
+              DFacturas
             </p>
             <p className="text-[10px] text-amber-400/70">
               Control de despachos

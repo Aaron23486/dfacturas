@@ -63,7 +63,7 @@ export default async function LoginPage({
 
             <div>
               <CardTitle className="text-xl text-slate-100">
-                Facturación V2
+                DFacturas
               </CardTitle>
               <CardDescription className="text-slate-400">
                 Control logístico de despachos
