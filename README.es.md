@@ -13,6 +13,12 @@ Aplicación de control logístico de despachos construida con **Next.js, TypeScr
 
 El proyecto está preparado como portafolio técnico con énfasis en **reglas de dominio, autorización en la capa de datos, trazabilidad, RPC transaccionales y separación mantenible de responsabilidades**.
 
+<!-- access-callout-start -->
+
+> **Modelo de acceso:** DFacturas incluye inicio de sesión con correo y contraseña, pero intencionalmente no ofrece registro público. Para ejecutar una instalación propia, cree el usuario manualmente en **Supabase Dashboard > Authentication > Users** y luego active su perfil y asigne el rol correspondiente.
+
+<!-- access-callout-end -->
+
 ## Vista del producto
 
 <!-- product-preview-start -->
@@ -138,6 +144,116 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
 Nunca coloques `service_role`, `sb_secret_*`, contraseñas de base de datos ni secretos JWT en variables `NEXT_PUBLIC_*`.
+
+## Autenticación y creación de usuarios
+
+<!-- user-provisioning-start -->
+
+DFacturas incluye un flujo completo de autenticación con correo y contraseña, pero intencionalmente **no ofrece registro público de usuarios**.
+
+Esto es una decisión de seguridad y no una funcionalidad faltante. DFacturas representa un sistema logístico interno en el que la organización controla quién puede acceder.
+
+### Modelo de acceso
+
+La autenticación y la autorización están separadas:
+
+```text
+Supabase Auth
+    |
+    v
+Identidad autenticada
+    |
+    v
+public.profiles
+    |
+    +-- active = false -> acceso denegado
+    |
+    +-- active = true
+            |
+            +-- OPERATIVO
+            |
+            +-- ADMIN
+```
+
+- **Supabase Auth** verifica la identidad mediante correo y contraseña.
+- `public.profiles` determina si esa identidad autenticada puede utilizar DFacturas.
+- Los perfiles nuevos se crean con rol `OPERATIVO`.
+- Los perfiles nuevos permanecen inactivos hasta ser habilitados explícitamente.
+- Los privilegios `ADMIN` deben asignarse intencionalmente.
+- El registro público y la autenticación anónima permanecen deshabilitados.
+
+Crear un usuario en Auth **no concede automáticamente acceso a DFacturas**.
+
+### Crear el primer usuario
+
+Después de crear un proyecto propio de Supabase y aplicar las migraciones de base de datos:
+
+1. Abra **Supabase Dashboard > Authentication > Users**.
+2. Seleccione **Add user**.
+3. Cree la cuenta con correo electrónico y contraseña.
+4. El trigger de base de datos crea automáticamente su fila en `public.profiles`.
+5. Abra **SQL Editor**.
+6. Active el perfil y asigne el rol requerido.
+7. Inicie DFacturas e ingrese desde `/login`.
+
+Verifique el usuario Auth y su perfil de aplicación:
+
+```sql
+select
+  u.id,
+  u.email,
+  p.role,
+  p.active
+from auth.users u
+join public.profiles p
+  on p.id = u.id
+order by u.created_at desc;
+```
+
+Habilitar un usuario operativo:
+
+```sql
+update public.profiles p
+set
+  role = 'OPERATIVO'::public.app_role,
+  active = true,
+  updated_at = now()
+from auth.users u
+where u.id = p.id
+  and u.email = 'operativo@example.com';
+```
+
+Habilitar un administrador:
+
+```sql
+update public.profiles p
+set
+  role = 'ADMIN'::public.app_role,
+  active = true,
+  updated_at = now()
+from auth.users u
+where u.id = p.id
+  and u.email = 'admin@example.com';
+```
+
+Reemplace el correo de ejemplo por el usuario creado en su propio proyecto Supabase.
+
+### Roles
+
+| Rol | Acceso |
+| --- | --- |
+| `OPERATIVO` | Operaciones de despacho autorizadas |
+| `ADMIN` | Operaciones más dashboard, catálogos, configuración, auditoría y funciones administrativas |
+
+### Política de credenciales
+
+El repositorio público intencionalmente no contiene contraseñas de usuarios, credenciales demo compartidas, claves `service_role` de Supabase, contraseñas de base de datos, secretos JWT ni otras credenciales privilegiadas.
+
+Quien desee evaluar el proyecto puede crear una instancia aislada de Supabase, aplicar las migraciones y provisionar sus propios usuarios siguiendo el procedimiento anterior.
+
+> No habilite el registro público solamente para crear la primera cuenta. Utilice **Authentication > Users > Add user** en Supabase.
+
+<!-- user-provisioning-end -->
 
 ## Instalación local
 

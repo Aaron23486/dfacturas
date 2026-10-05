@@ -13,6 +13,12 @@ A role-aware logistics dispatch application built with **Next.js, TypeScript, Su
 
 The project is designed as a portfolio-grade application with an emphasis on **domain rules, authorization at the data layer, traceability, transactional RPCs and maintainable separation of concerns**.
 
+<!-- access-callout-start -->
+
+> **Access model:** DFacturas includes email/password login but intentionally has no public sign-up. It is designed as an internal logistics application. To run your own instance, create the user manually in **Supabase Dashboard > Authentication > Users**, then activate the associated profile and assign its role.
+
+<!-- access-callout-end -->
+
 ## Product preview
 
 <!-- product-preview-start -->
@@ -168,6 +174,118 @@ DFacturas uses defense in depth:
 - Browser code never requires a `service_role` or `sb_secret_*` key.
 
 See [Security](docs/security.md) for controls, threat boundaries and deployment settings.
+
+## Authentication and user provisioning
+
+## Authentication and user provisioning
+
+<!-- user-provisioning-start -->
+
+DFacturas includes a complete email/password authentication flow, but intentionally does **not** expose self-service registration.
+
+This is a security decision, not a missing feature. DFacturas models an internal logistics system in which the organization controls who can access the application.
+
+### Access model
+
+Authentication and authorization are separate concerns:
+
+```text
+Supabase Auth
+    |
+    v
+Authenticated identity
+    |
+    v
+public.profiles
+    |
+    +-- active = false -> access denied
+    |
+    +-- active = true
+            |
+            +-- OPERATIVO
+            |
+            +-- ADMIN
+```
+
+- **Supabase Auth** verifies the user's email/password identity.
+- `public.profiles` determines whether that authenticated identity can use DFacturas.
+- New profiles are created with the `OPERATIVO` role.
+- New profiles remain inactive until explicitly enabled.
+- `ADMIN` privileges must be granted intentionally.
+- Public sign-up and anonymous authentication remain disabled.
+
+Creating an Auth user therefore does **not** automatically grant application access.
+
+### Create the first user
+
+After creating your own Supabase project and applying the database migrations:
+
+1. Open **Supabase Dashboard > Authentication > Users**.
+2. Select **Add user**.
+3. Create the account with an email address and password.
+4. The database trigger creates the associated row in `public.profiles`.
+5. Open **SQL Editor**.
+6. Activate the profile and assign the required role.
+7. Start DFacturas and sign in through `/login`.
+
+Verify the Auth user and application profile:
+
+```sql
+select
+  u.id,
+  u.email,
+  p.role,
+  p.active
+from auth.users u
+join public.profiles p
+  on p.id = u.id
+order by u.created_at desc;
+```
+
+Enable an operational user:
+
+```sql
+update public.profiles p
+set
+  role = 'OPERATIVO'::public.app_role,
+  active = true,
+  updated_at = now()
+from auth.users u
+where u.id = p.id
+  and u.email = 'operator@example.com';
+```
+
+Enable an administrator:
+
+```sql
+update public.profiles p
+set
+  role = 'ADMIN'::public.app_role,
+  active = true,
+  updated_at = now()
+from auth.users u
+where u.id = p.id
+  and u.email = 'admin@example.com';
+```
+
+Replace the example email with the user created in your own Supabase project.
+
+### Roles
+
+| Role | Access |
+| --- | --- |
+| `OPERATIVO` | Authorized dispatch operations |
+| `ADMIN` | Operations plus dashboard, catalogs, configuration, audit and administrative functions |
+
+### Credential policy
+
+The public repository intentionally contains no user passwords, shared demo credentials, Supabase `service_role` keys, database passwords, JWT signing secrets or other privileged credentials.
+
+Anyone evaluating the project can create an isolated Supabase instance, apply the migrations and provision their own users using the procedure above.
+
+> Do not enable public sign-up just to create the first account. Use **Authentication > Users > Add user** in Supabase instead.
+
+<!-- user-provisioning-end -->
 
 ## Local setup
 
