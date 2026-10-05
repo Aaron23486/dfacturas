@@ -68,8 +68,7 @@ Administrative users manage companies and their associated routes through a focu
 | Auth / Data | Supabase Auth + PostgreSQL |
 | Database security | RLS, grants, security-definer RPCs, constraints, triggers |
 | Testing | Vitest 5 |
-| Deployment target | Vercel + Supabase |
-
+| Deployment | Optional; Vercel-compatible with Supabase |
 ## Functional modules
 
 The main navigation exposes five operational modules:
@@ -174,8 +173,6 @@ DFacturas uses defense in depth:
 - Browser code never requires a `service_role` or `sb_secret_*` key.
 
 See [Security](docs/security.md) for controls, threat boundaries and deployment settings.
-
-## Authentication and user provisioning
 
 ## Authentication and user provisioning
 
@@ -390,23 +387,31 @@ See [Testing](docs/testing.md) for exactly what is and is not covered.
 
 ## Deployment
 
-The intended production topology is:
+<!-- deployment-optional-start -->
+
+A public live deployment is **not required** to evaluate this portfolio project.
+
+DFacturas can be run locally with a dedicated Supabase project by following the setup and user-provisioning instructions above. The application is also compatible with Vercel if a hosted environment is desired later.
+
+Optional hosted topology:
 
 ```text
 Browser
-   │
-   ▼
+   |
+   v
 Vercel / Next.js
-   │
-   ▼
+   |
+   v
 Supabase Auth + Data API
-   │
-   ▼
+   |
+   v
 PostgreSQL
 (RLS + RPC + constraints + audit)
 ```
 
-See [Deployment](docs/deployment.md) for a release checklist.
+See [Deployment](docs/deployment.md) for the optional release checklist.
+
+<!-- deployment-optional-end -->
 
 ## Demo-data policy
 

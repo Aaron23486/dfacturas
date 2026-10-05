@@ -68,7 +68,7 @@ Los usuarios administrativos gestionan compañías y sus rutas asociadas desde u
 | Auth / Datos | Supabase Auth + PostgreSQL |
 | Seguridad BD | RLS, grants, RPC, constraints y triggers |
 | Testing | Vitest 5 |
-| Deploy | Vercel + Supabase |
+| Deploy | Opcional; compatible con Vercel y Supabase |
 
 ## Módulos
 
