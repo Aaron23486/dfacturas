@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
 
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
 export type SupabaseTarget = {
   url: string;
   publishableKey: string;
@@ -52,4 +54,116 @@ export function readLocalSupabase(): SupabaseTarget {
   }
 
   return { url, publishableKey, secretKey, local: true };
+}
+
+// Supabase local por defecto. Para un proyecto alojado se definen SUPABASE_URL,
+// SUPABASE_PUBLISHABLE_KEY y SUPABASE_SECRET_KEY en la terminal que ejecuta el comando;
+// la clave secreta nunca se lee de .env.local, que carga la app web.
+export function resolveSupabaseTarget(): SupabaseTarget {
+  const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY } =
+    process.env;
+
+  if (SUPABASE_URL || SUPABASE_SECRET_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !SUPABASE_SECRET_KEY) {
+      throw new Error(
+        "Para un proyecto remoto define SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY y SUPABASE_SECRET_KEY.",
+      );
+    }
+    return {
+      url: SUPABASE_URL,
+      publishableKey: SUPABASE_PUBLISHABLE_KEY,
+      secretKey: SUPABASE_SECRET_KEY,
+      local: isLocalUrl(SUPABASE_URL),
+    };
+  }
+
+  return readLocalSupabase();
+}
+
+const clientOptions = {
+  auth: { persistSession: false, autoRefreshToken: false },
+} as const;
+
+// Cliente con la clave secreta: API de administración de Auth y cambios de perfil.
+export function adminClient(target: SupabaseTarget): SupabaseClient {
+  return createClient(target.url, target.secretKey, clientOptions);
+}
+
+// Cliente con la sesión de un usuario: los datos pasan por las mismas RPC y políticas que la app.
+export async function signedInClient(
+  target: SupabaseTarget,
+  email: string,
+  password: string,
+): Promise<SupabaseClient> {
+  const client = createClient(target.url, target.publishableKey, clientOptions);
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    throw new Error(
+      `No fue posible iniciar sesión como ${email}: ${error.message}`,
+    );
+  }
+  return client;
+}
+
+export type AuthAccount = { id: string; email: string };
+
+// La API de administración de Auth lista las cuentas por páginas.
+export async function findAccountByEmail(
+  admin: SupabaseClient,
+  email: string,
+): Promise<AuthAccount | null> {
+  const wanted = email.toLowerCase();
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: 200,
+    });
+    if (error) {
+      throw new Error(`No fue posible consultar las cuentas: ${error.message}`);
+    }
+    const match = data.users.find(
+      (user) => user.email?.toLowerCase() === wanted,
+    );
+    if (match) return { id: match.id, email: match.email ?? email };
+    if (data.users.length < 200) return null;
+  }
+}
+
+export const ROLES = ["ADMIN", "OPERATIVO"] as const;
+export type Role = (typeof ROLES)[number];
+
+export type ProfileAccess = { role: Role; active: boolean };
+
+// Fija rol y estado del perfil. La base rechaza dejar el sistema sin un ADMIN activo
+// (migración 007) y registra el cambio en audit_logs.
+export async function setProfileAccess(
+  admin: SupabaseClient,
+  userId: string,
+  access: ProfileAccess,
+): Promise<boolean> {
+  const { data: current, error: readError } = await admin
+    .from("profiles")
+    .select("role, active")
+    .eq("id", userId)
+    .maybeSingle();
+  if (readError || !current) {
+    throw new Error("La cuenta no tiene perfil en public.profiles.");
+  }
+  if (current.role === access.role && current.active === access.active) {
+    return false;
+  }
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ role: access.role, active: access.active })
+    .eq("id", userId);
+  if (error) {
+    if (error.message.includes("LAST_ADMIN_REQUIRED")) {
+      throw new Error("No se puede retirar el último ADMIN activo.");
+    }
+    throw new Error(
+      `No fue posible actualizar el acceso (${error.code ?? "sin código"}).`,
+    );
+  }
+  return true;
 }
