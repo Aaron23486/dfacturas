@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-29
+
 ### Added
 
 - Local Supabase stack with `db:up`, `db:down`, `db:reset`, `db:status`, `db:verify` and `env:local`.
@@ -24,6 +26,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - The dispatch screen and cancel dialog use the tested invoice and scan rules from `src/domain`.
 - Form labels are linked to their fields, secondary text contrast meets WCAG AA and the audit page follows the dark theme.
 - Code formatted with Prettier; comments in Spanish.
+- Dependencies updated within their major versions: React 19.3, Base UI 1.9, supabase-js 2.118, lucide-react 1.61, Vitest 5.0.5.
 
 ### Removed
 
@@ -41,5 +44,6 @@ All notable changes to this project are documented here. The format follows [Kee
 - Invoice dispatch application: two-scan flow, cancellations, corrections and soft deletion; dashboard with Excel export; catalogs for responsible staff, carriers, companies and routes; audit log.
 - PostgreSQL schema with RLS, dispatch RPCs and security hardening (migrations 001–005).
 
-[Unreleased]: https://github.com/Aaron23486/dfacturas/compare/d6813ff...HEAD
+[Unreleased]: https://github.com/Aaron23486/dfacturas/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Aaron23486/dfacturas/compare/d6813ff...v1.0.0
 [0.1.0]: https://github.com/Aaron23486/dfacturas/tree/d6813ff
