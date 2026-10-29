@@ -14,6 +14,11 @@ export function normalizeInvoice(value: string): string {
   return value.trim().replace(/\s+/g, "");
 }
 
+// Limpia lo que escribe o escanea el usuario: solo dígitos y como máximo 20.
+export function sanitizeInvoiceInput(value: string): string {
+  return value.replace(/\D/g, "").slice(0, INVOICE_LENGTH);
+}
+
 export function validateInvoice(value: string): InvoiceValidationResult {
   const normalized = normalizeInvoice(value);
 
@@ -42,4 +47,8 @@ export function validateInvoice(value: string): InvoiceValidationResult {
     valid: true,
     value: normalized,
   };
+}
+
+export function isValidInvoice(value: string): boolean {
+  return validateInvoice(value).valid;
 }

@@ -57,24 +57,6 @@ export async function findLatestDispatchByFactura(
   return data ? mapRow(data as unknown as RawJoin) : null;
 }
 
-export async function findDispatchById(
-  id: string,
-): Promise<DispatchListItem | null> {
-  const { data, error } = await createClient()
-    .from("despachos")
-    .select(join)
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (error)
-    throw new AppError(
-      "No se pudo consultar el despacho.",
-      "DISPATCH_LOOKUP_FAILED",
-      error,
-    );
-  return data ? mapRow(data as unknown as RawJoin) : null;
-}
-
 export async function listDispatches(limit = 300): Promise<DispatchListItem[]> {
   const { data, error } = await createClient()
     .from("despachos")

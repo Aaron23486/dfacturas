@@ -36,6 +36,12 @@ import {
   listTransportistasActivos,
 } from "@/services/catalog.service";
 
+import { INVOICE_LENGTH } from "@/domain/dispatch/dispatch.constants";
+import {
+  isValidInvoice,
+  sanitizeInvoiceInput,
+} from "@/domain/dispatch/invoice.rules";
+
 import { deleteDispatch, listDispatches } from "@/services/dispatch.service";
 
 import {
@@ -90,17 +96,6 @@ type ConfirmState = {
 const STORAGE_KEY = "facturacion-v2:dispatch-context";
 
 const NOOP_FINALIZE = async () => {};
-
-const FACTURA_LENGTH = 20;
-const FACTURA_PATTERN = /^\d{20}$/;
-
-function normalizeFactura(value: string) {
-  return value.replace(/\D/g, "").slice(0, FACTURA_LENGTH);
-}
-
-function isValidFactura(value: string) {
-  return FACTURA_PATTERN.test(value.trim());
-}
 
 function isClienteRetira(transportista: Transportista | null | undefined) {
   return transportista?.nombre.trim().toUpperCase() === "CLIENTE RETIRA";
@@ -526,7 +521,7 @@ export function DispatchWorkspace({
       return;
     }
 
-    if (!isValidFactura(factura)) {
+    if (!isValidInvoice(factura)) {
       setErrorDialog({
         title: "Factura inválida",
         message:
@@ -546,12 +541,7 @@ export function DispatchWorkspace({
       }
 
       const current = existingContext
-        ? await processFacturaScan(
-            factura.trim(),
-            null,
-            userId,
-            existingContext,
-          )
+        ? await processFacturaScan(factura.trim(), null, existingContext)
         : null;
 
       if (current) {
@@ -601,7 +591,6 @@ export function DispatchWorkspace({
 
           detalle: detalle.trim() || null,
         },
-        userId,
         null,
       );
 
@@ -733,12 +722,12 @@ export function DispatchWorkspace({
                     ref={facturaRef}
                     value={factura}
                     onChange={(event) =>
-                      setFactura(normalizeFactura(event.target.value))
+                      setFactura(sanitizeInvoiceInput(event.target.value))
                     }
 
                     type="text"
                     inputMode="numeric"
-                    maxLength={FACTURA_LENGTH}
+                    maxLength={INVOICE_LENGTH}
                     pattern="[0-9]{20}"
                     placeholder="Escanee la factura"
                     autoComplete="off"

@@ -1,10 +1,26 @@
-import type { Dispatch } from "./dispatch.types";
-import type { DispatchScanContext } from "./dispatch.types";
+import type { DispatchStatus } from "./dispatch.constants";
 
-export function resolveDispatchScan(
-  dispatch: Dispatch | null,
-): DispatchScanContext {
-  if (dispatch === null || dispatch.deletedAt !== null) {
+// Lo mínimo que la regla necesita de un despacho guardado.
+export type ScannableDispatch = {
+  estado: DispatchStatus;
+  deleted_at: string | null;
+};
+
+export type DispatchScanDecision<T extends ScannableDispatch> =
+  | {
+      kind: "AVAILABLE";
+      dispatch: null;
+    }
+  | {
+      kind: "IN_PROGRESS" | "ALREADY_DISPATCHED" | "CANCELLED";
+      dispatch: T;
+    };
+
+// Primer escaneo inicia, segundo finaliza; despachadas y canceladas se bloquean.
+export function resolveDispatchScan<T extends ScannableDispatch>(
+  dispatch: T | null,
+): DispatchScanDecision<T> {
+  if (dispatch === null || dispatch.deleted_at !== null) {
     return {
       kind: "AVAILABLE",
       dispatch: null,

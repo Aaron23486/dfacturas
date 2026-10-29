@@ -1,22 +1,12 @@
-import {
-  cancelDispatchSchema,
-  scanFacturaSchema,
-} from "@/schemas/dispatch.schema";
+import { cancelDispatchSchema } from "@/schemas/dispatch.schema";
 import {
   cancelDispatch,
   editDispatch,
-  findLatestDispatchByFactura,
   listDispatches,
   softDeleteDispatch,
   updateDispatchDetail,
 } from "@/repositories/dispatch.repository";
-import { evaluateFactura } from "@/features/despachos/domain/dispatch.rules";
 import type { CancelDispatchInput, EditDispatchInput } from "@/types/dispatch";
-
-export async function scanFactura(factura: string) {
-  const parsed = scanFacturaSchema.parse({ factura });
-  return evaluateFactura(await findLatestDispatchByFactura(parsed.factura));
-}
 
 export async function registerCancelledDispatch(
   input: CancelDispatchInput,

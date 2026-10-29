@@ -14,23 +14,17 @@ import { AppDialog } from "@/components/app/app-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { INVOICE_LENGTH } from "@/domain/dispatch/dispatch.constants";
+import {
+  isValidInvoice,
+  sanitizeInvoiceInput,
+} from "@/domain/dispatch/invoice.rules";
 import { listRutasByCompania } from "@/services/catalog.service";
 import { registerCancelledDispatch } from "@/services/dispatch.service";
 import type { Compania, Responsable, Ruta } from "@/types/catalog";
 
-const FACTURA_LENGTH = 20;
-const FACTURA_PATTERN = /^\d{20}$/;
-
 const selectClass =
   "h-12 w-full rounded-xl border border-white/10 bg-[#07111F]/90 px-4 text-base text-slate-100 outline-none transition focus:border-red-400/45 focus:ring-2 focus:ring-red-400/10";
-
-function normalizeFactura(value: string) {
-  return value.replace(/\D/g, "").slice(0, FACTURA_LENGTH);
-}
-
-function isValidFactura(value: string) {
-  return FACTURA_PATTERN.test(value.trim());
-}
 
 type CancelOrderDialogProps = {
   open: boolean;
@@ -151,7 +145,7 @@ function CancelOrderDialogContent({
       return false;
     }
 
-    if (!isValidFactura(factura)) {
+    if (!isValidInvoice(factura)) {
       setErrorMessage(
         "La factura debe contener exactamente 20 números, sin letras, espacios ni símbolos.",
       );
@@ -328,13 +322,13 @@ function CancelOrderDialogContent({
             ref={facturaRef}
             value={factura}
             onChange={(event) => {
-              setFactura(normalizeFactura(event.target.value));
+              setFactura(sanitizeInvoiceInput(event.target.value));
               setMissingFields([]);
               setErrorMessage(null);
             }}
             type="text"
             inputMode="numeric"
-            maxLength={FACTURA_LENGTH}
+            maxLength={INVOICE_LENGTH}
             autoComplete="off"
             disabled={loading}
             placeholder="Escanee la factura para cancelar"
