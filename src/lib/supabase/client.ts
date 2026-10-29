@@ -1,5 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+import { browserCookies, sessionCookieOptions } from "./cookie-options";
+
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -11,5 +13,8 @@ export function createClient() {
       "Missing environment variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     );
 
-  return createBrowserClient(url, publishableKey);
+  return createBrowserClient(url, publishableKey, {
+    cookieOptions: sessionCookieOptions,
+    cookies: browserCookies,
+  });
 }

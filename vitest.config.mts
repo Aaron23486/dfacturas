@@ -16,6 +16,7 @@ export default defineConfig({
         "src/domain/**",
         "src/lib/errors/**",
         "src/lib/security/**",
+        "src/lib/supabase/cookie-options.ts",
         "src/lib/utils/**",
         "src/lib/utils.ts",
         "src/schemas/**",

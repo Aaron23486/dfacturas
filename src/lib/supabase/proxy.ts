@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { sessionCookieOptions, withSessionLifetime } from "./cookie-options";
+
 // requestHeaders lleva la CSP con el nonce hacia el renderizado.
 export async function updateSession(
   request: NextRequest,
@@ -13,6 +15,7 @@ export async function updateSession(
     throw new Error("Missing Supabase public environment variables");
 
   const supabase = createServerClient(url, publishableKey, {
+    cookieOptions: sessionCookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -23,7 +26,7 @@ export async function updateSession(
         );
         response = NextResponse.next({ request: { headers: requestHeaders } });
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
+          response.cookies.set(name, value, withSessionLifetime(options)),
         );
       },
     },
