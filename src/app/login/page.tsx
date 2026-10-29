@@ -85,7 +85,7 @@ export default async function LoginPage({ searchParams }: Props) {
                 type="email"
                 autoComplete="email"
                 required
-                className="border-white/10 bg-white/[0.04] text-slate-100 placeholder:text-slate-600 focus-visible:border-amber-500/60"
+                className="border-white/10 bg-white/[0.04] text-slate-100 placeholder:text-slate-400 focus-visible:border-amber-500/60"
               />
             </div>
 
@@ -100,7 +100,7 @@ export default async function LoginPage({ searchParams }: Props) {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="border-white/10 bg-white/[0.04] text-slate-100 placeholder:text-slate-600 focus-visible:border-amber-500/60"
+                className="border-white/10 bg-white/[0.04] text-slate-100 placeholder:text-slate-400 focus-visible:border-amber-500/60"
               />
             </div>
 

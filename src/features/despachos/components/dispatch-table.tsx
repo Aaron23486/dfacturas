@@ -136,7 +136,7 @@ function InlineFilterHeader({
           onClick={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <Search className="pointer-events-none absolute left-2 top-1/2 z-10 size-3.5 -translate-y-1/2 text-amber-400/65" />
+          <Search className="pointer-events-none absolute left-2 top-1/2 z-10 size-3.5 -translate-y-1/2 text-amber-400/85" />
 
           <Input
             ref={inputRef}
@@ -177,7 +177,7 @@ function InlineFilterHeader({
               type="button"
               title={`Limpiar ${label}`}
               aria-label={`Limpiar filtro ${label}`}
-              className="absolute right-1.5 top-1/2 z-20 grid size-5 -translate-y-1/2 place-items-center rounded-md text-slate-600 transition hover:bg-white/[0.06] hover:text-amber-400"
+              className="absolute right-1.5 top-1/2 z-20 grid size-5 -translate-y-1/2 place-items-center rounded-md text-slate-400 transition hover:bg-white/[0.06] hover:text-amber-400"
               onClick={(event) => {
                 event.stopPropagation();
 
@@ -198,7 +198,7 @@ function InlineFilterHeader({
 
             "hover:bg-amber-500/[0.035]",
 
-            hasValue ? "text-amber-400" : "text-slate-500 hover:text-slate-300",
+            hasValue ? "text-amber-400" : "text-slate-400 hover:text-slate-300",
           ].join(" ")}
           title={`Filtrar por ${label}`}
         >
@@ -213,7 +213,7 @@ function InlineFilterHeader({
 
                 hasValue
                   ? "text-amber-400"
-                  : "text-slate-600 group-hover:text-amber-400/70",
+                  : "text-slate-400 group-hover:text-amber-400/70",
               ].join(" ")}
             />
 
@@ -289,7 +289,7 @@ function SortableHeader({
 
         "hover:bg-amber-500/[0.035]",
 
-        active ? "text-amber-400" : "text-slate-500 hover:text-slate-300",
+        active ? "text-amber-400" : "text-slate-400 hover:text-slate-300",
       ].join(" ")}
       title={
         !active
@@ -304,7 +304,7 @@ function SortableHeader({
       </span>
 
       {!active ? (
-        <ArrowUpDown className="size-3.5 shrink-0 text-slate-600 transition group-hover:text-amber-400/70" />
+        <ArrowUpDown className="size-3.5 shrink-0 text-slate-400 transition group-hover:text-amber-400/70" />
       ) : direction === "asc" ? (
         <ArrowUp className="size-3.5 shrink-0 text-amber-400" />
       ) : (
@@ -316,7 +316,7 @@ function SortableHeader({
 
 function StaticHeader({ children }: { children: string }) {
   return (
-    <div className="flex h-8 items-center px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+    <div className="flex h-8 items-center px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-400">
       {children}
     </div>
   );
@@ -647,7 +647,7 @@ function DispatchTableComponent({
                   </p>
 
                   {row.placa ? (
-                    <p className="truncate text-[11px] text-amber-400/55">
+                    <p className="truncate text-[11px] text-amber-400/85">
                       {row.placa}
                     </p>
                   ) : null}
@@ -721,7 +721,7 @@ function DispatchTableComponent({
 
           {processedRows.length === 0 ? (
             <tr>
-              <td colSpan={11} className="p-10 text-center text-slate-600">
+              <td colSpan={11} className="p-10 text-center text-slate-400">
                 No hay registros que coincidan con los filtros.
               </td>
             </tr>

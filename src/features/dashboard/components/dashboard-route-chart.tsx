@@ -39,7 +39,7 @@ function DashboardRouteChartComponent({ data, selectedId, onSelect }: Props) {
     >
       <div className="mb-3">
         <h2 className="text-sm font-semibold text-slate-100">Por ruta</h2>
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-slate-400">
           Top 10 rutas por volumen de despacho
         </p>
       </div>

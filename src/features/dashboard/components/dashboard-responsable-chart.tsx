@@ -42,7 +42,7 @@ function DashboardResponsableChartComponent({
         <h2 className="text-sm font-semibold text-slate-100">
           Por responsable
         </h2>
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-slate-400">
           Ranking de volumen atendido
         </p>
       </div>

@@ -21,7 +21,8 @@
     "users": "node scripts/users.mts",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.mts",
-    "db:verify": "node scripts/db-verify.mts"
+    "db:verify": "node scripts/db-verify.mts",
+    "test:e2e": "playwright test --config e2e/playwright.config.mts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -39,6 +40,8 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.19.0",
     "@types/react": "19.3.0",

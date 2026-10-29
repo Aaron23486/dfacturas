@@ -10,7 +10,7 @@ export default async function AppPage() {
         <h1 className="text-lg font-semibold tracking-tight text-slate-100">
           Despacho de facturas
         </h1>
-        <p className="text-[11px] text-slate-600">
+        <p className="text-[11px] text-slate-400">
           Primer escaneo inicia. Segundo escaneo finaliza.
         </p>
       </div>

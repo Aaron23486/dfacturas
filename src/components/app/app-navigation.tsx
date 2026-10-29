@@ -63,11 +63,11 @@ export function AppNavigation({ items }: { items: NavigationItem[] }) {
                 disabledReason ??
                 "Necesita permisos de administrador para acceder."
               }
-              className="relative inline-flex h-9 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg border border-transparent px-3 text-xs text-slate-600 opacity-70"
+              className="relative inline-flex h-9 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg border border-transparent px-3 text-xs text-slate-400 opacity-70"
             >
               <Icon className="size-3.5" />
               <span>{label}</span>
-              <LockKeyhole className="size-3 text-slate-600" />
+              <LockKeyhole className="size-3 text-slate-400" />
             </span>
           );
         }

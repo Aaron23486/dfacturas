@@ -30,7 +30,7 @@ function DashboardRouteTimeChartComponent({ data }: Props) {
           Tiempo promedio — Top 10 rutas más despachadas
         </h2>
 
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-slate-400">
           Las 10 rutas con mayor volumen de facturas despachadas en el período
         </p>
       </div>
@@ -100,7 +100,7 @@ function DashboardRouteTimeChartComponent({ data }: Props) {
                         Promedio: {Number(item.value).toFixed(1)} min
                       </p>
 
-                      <p className="text-[10px] text-slate-500">
+                      <p className="text-[10px] text-slate-400">
                         Despachos: {item.dispatches}
                       </p>
                     </div>
@@ -131,7 +131,7 @@ function DashboardRouteTimeChartComponent({ data }: Props) {
         </div>
       ) : (
         <div className="grid h-[270px] place-items-center">
-          <p className="text-[10px] text-slate-600">
+          <p className="text-[10px] text-slate-400">
             No hay despachos finalizados con ruta durante este período.
           </p>
         </div>

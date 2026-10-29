@@ -171,7 +171,7 @@ export function ConfiguracionAdmin() {
                 Compañías
               </h3>
 
-              <p className="text-[10px] text-slate-600">Catálogo operativo.</p>
+              <p className="text-[10px] text-slate-400">Catálogo operativo.</p>
             </div>
           </div>
 
@@ -180,6 +180,7 @@ export function ConfiguracionAdmin() {
               value={nombre}
               onChange={(event) => setNombre(event.target.value)}
               placeholder="Nueva compañía"
+              aria-label="Nombre de la nueva compañía"
               className={inputClass}
             />
 
@@ -250,7 +251,7 @@ export function ConfiguracionAdmin() {
             <div>
               <h3 className="text-sm font-semibold text-slate-100">Rutas</h3>
 
-              <p className="text-[10px] text-slate-600">
+              <p className="text-[10px] text-slate-400">
                 Asociadas a una compañía.
               </p>
             </div>
@@ -258,11 +259,15 @@ export function ConfiguracionAdmin() {
 
           <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-[0.06em] text-slate-500">
+              <Label
+                htmlFor="config-ruta-compania"
+                className="text-[10px] uppercase tracking-[0.06em] text-slate-400"
+              >
                 Compañía
               </Label>
 
               <select
+                id="config-ruta-compania"
                 className="h-10 w-full rounded-lg border border-white/10 bg-[#07111F]/85 px-3 text-xs text-slate-200 outline-none focus:border-amber-500/40"
                 value={companiaId}
                 onChange={(event) => {
@@ -292,11 +297,15 @@ export function ConfiguracionAdmin() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-[0.06em] text-slate-500">
+              <Label
+                htmlFor="config-ruta-numero"
+                className="text-[10px] uppercase tracking-[0.06em] text-slate-400"
+              >
                 Ruta
               </Label>
 
               <Input
+                id="config-ruta-numero"
                 value={numero}
                 onChange={(event) => {
                   const value = event.target.value.replace(/\D/g, "");
@@ -338,15 +347,15 @@ export function ConfiguracionAdmin() {
           </div>
 
           {!companiaId ? (
-            <div className="mt-4 rounded-xl border border-dashed border-white/8 bg-white/[0.015] px-3 py-6 text-center text-[11px] text-slate-600">
+            <div className="mt-4 rounded-xl border border-dashed border-white/8 bg-white/[0.015] px-3 py-6 text-center text-[11px] text-slate-400">
               Seleccione una compañía para ver sus rutas.
             </div>
           ) : routesLoading ? (
-            <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-600">
+            <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-400">
               Cargando rutas...
             </div>
           ) : rutas.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-600">
+            <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-400">
               Esta compañía no tiene rutas activas.
             </div>
           ) : (
