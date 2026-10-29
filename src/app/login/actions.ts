@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { isAppRole } from "@/domain/auth/auth.rules";
+import { emailFingerprint, securityEvent } from "@/lib/security/events";
 import { createClient } from "@/lib/supabase/server";
 
 type LoginErrorCode = "required" | "invalid" | "profile" | "inactive";
@@ -24,7 +25,12 @@ export async function login(formData: FormData) {
     password,
   });
 
-  if (error || !data.user) redirect(loginError("invalid"));
+  if (error || !data.user) {
+    securityEvent("login.failed", {
+      emailFingerprint: emailFingerprint(email),
+    });
+    redirect(loginError("invalid"));
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -33,11 +39,13 @@ export async function login(formData: FormData) {
     .maybeSingle();
 
   if (profileError || !profile || !isAppRole(profile.role)) {
+    securityEvent("login.denied_without_profile", { userId: data.user.id });
     await supabase.auth.signOut();
     redirect(loginError("profile"));
   }
 
   if (!profile.active) {
+    securityEvent("login.denied_inactive", { userId: data.user.id });
     await supabase.auth.signOut();
     redirect(loginError("inactive"));
   }
