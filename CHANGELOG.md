@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-29
+
+### Changed
+
+- The dispatch screen and history table are split into domain modules (`workspace`, `history`), a history hook and presentational components, with unit tests for the extracted rules.
+
 ### Security
 
 - Passwords can only be changed from the terminal (`users -- reset-password`): the database rejects changes made with a session or through the Auth admin API, and a reset closes the account's open sessions (migration 010).
@@ -48,6 +54,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Invoice dispatch application: two-scan flow, cancellations, corrections and soft deletion; dashboard with Excel export; catalogs for responsible staff, carriers, companies and routes; audit log.
 - PostgreSQL schema with RLS, dispatch RPCs and security hardening (migrations 001–005).
 
-[Unreleased]: https://github.com/Aaron23486/dfacturas/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Aaron23486/dfacturas/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Aaron23486/dfacturas/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Aaron23486/dfacturas/compare/d6813ff...v1.0.0
 [0.1.0]: https://github.com/Aaron23486/dfacturas/tree/d6813ff
