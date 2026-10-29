@@ -679,7 +679,7 @@ export function DispatchWorkspace({
                   Escaneo y operación
                 </h2>
 
-                <p className="text-[11px] text-slate-600">
+                <p className="text-[11px] text-slate-400">
                   Primer escaneo inicia. Segundo escaneo finaliza.
                 </p>
               </div>
@@ -713,12 +713,16 @@ export function DispatchWorkspace({
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid content-start gap-3">
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                  <Label
+                    htmlFor="dispatch-factura"
+                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
+                  >
                     <ScanLine className="size-3.5 text-amber-400/70" />
                     Factura
                   </Label>
 
                   <Input
+                    id="dispatch-factura"
                     ref={facturaRef}
                     value={factura}
                     onChange={(event) =>
@@ -744,11 +748,15 @@ export function DispatchWorkspace({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] font-medium text-slate-400">
+                  <Label
+                    htmlFor="dispatch-detalle"
+                    className="text-[11px] font-medium text-slate-400"
+                  >
                     Detalle
                   </Label>
 
                   <Textarea
+                    id="dispatch-detalle"
                     value={detalle}
                     onChange={(event) => setDetalle(event.target.value)}
                     rows={3}
@@ -760,12 +768,16 @@ export function DispatchWorkspace({
 
               <div className="grid content-start gap-3">
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                  <Label
+                    htmlFor="dispatch-responsable"
+                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
+                  >
                     <UserRound className="size-3.5 text-amber-400/70" />
                     Responsable
                   </Label>
 
                   <select
+                    id="dispatch-responsable"
                     className={selectClass}
                     value={responsableId}
                     onChange={(event) => setResponsableId(event.target.value)}
@@ -781,13 +793,17 @@ export function DispatchWorkspace({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                  <Label
+                    htmlFor="dispatch-transportista"
+                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
+                  >
                     <Truck className="size-3.5 text-amber-400/70" />
                     Transportista
                   </Label>
 
                   <div className="flex gap-2">
                     <select
+                      id="dispatch-transportista"
                       className={selectClass}
                       value={transportistaId}
                       onChange={(event) =>
@@ -812,6 +828,7 @@ export function DispatchWorkspace({
                       className="h-10 shrink-0 border-amber-500/15 bg-amber-500/[0.04] px-3 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
                       onClick={() => setTransportModal(true)}
                       title="Agregar transportista"
+                      aria-label="Agregar transportista"
                     >
                       <Plus className="size-4" />
                     </Button>
@@ -855,7 +872,7 @@ export function DispatchWorkspace({
                 Compañía y rutas
               </h2>
 
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-slate-400">
                 Las rutas dependen de la compañía seleccionada.
               </p>
             </div>
@@ -863,11 +880,15 @@ export function DispatchWorkspace({
 
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium text-slate-400">
+              <Label
+                htmlFor="dispatch-compania"
+                className="text-[11px] font-medium text-slate-400"
+              >
                 Compañía
               </Label>
 
               <select
+                id="dispatch-compania"
                 className={selectClass}
                 value={companiaId}
                 onChange={(event) => {
@@ -887,20 +908,28 @@ export function DispatchWorkspace({
             </div>
 
             <div>
-              <Label className="text-[11px] font-medium text-slate-400">
+              <p
+                id="dispatch-ruta"
+                className="text-[11px] font-medium text-slate-400"
+              >
                 Ruta
-              </Label>
+              </p>
 
               {!companiaId ? (
-                <div className="mt-1.5 grid min-h-[94px] place-items-center rounded-xl border border-dashed border-white/8 bg-black/10 text-sm text-slate-700">
+                <div className="mt-1.5 grid min-h-[94px] place-items-center rounded-xl border border-dashed border-white/8 bg-black/10 text-sm text-slate-400">
                   Seleccione una compañía
                 </div>
               ) : (
-                <div className="mt-2 grid grid-cols-7 gap-2 2xl:grid-cols-10">
+                <div
+                  role="group"
+                  aria-labelledby="dispatch-ruta"
+                  className="mt-2 grid grid-cols-7 gap-2 2xl:grid-cols-10"
+                >
                   {rutas.map((ruta) => (
                     <button
                       key={ruta.id}
                       type="button"
+                      aria-pressed={rutaId === ruta.id}
                       onClick={() => setRutaId(ruta.id)}
                       className={[
                         "h-9 rounded-lg border text-xs font-semibold transition",
@@ -927,12 +956,12 @@ export function DispatchWorkspace({
               Historial en tiempo real
             </h2>
 
-            <p className="text-[11px] text-slate-600">
+            <p className="text-[11px] text-slate-400">
               Filtre y corrija sin abandonar la pantalla.
             </p>
           </div>
 
-          <span className="rounded-md border border-white/8 bg-white/[0.025] px-2.5 py-1 text-[11px] text-slate-500">
+          <span className="rounded-md border border-white/8 bg-white/[0.025] px-2.5 py-1 text-[11px] text-slate-400">
             {rows.length} registros
           </span>
         </div>

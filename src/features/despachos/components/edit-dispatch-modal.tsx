@@ -318,7 +318,7 @@ export function EditDispatchModal({
               <span className="text-amber-400">{row.factura}</span>
             </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               {operationalDispatched
                 ? "Factura despachada: como usuario operativo únicamente puede modificar el detalle."
                 : admin
@@ -330,7 +330,7 @@ export function EditDispatchModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.05] hover:text-white"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/[0.05] hover:text-white"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -521,14 +521,14 @@ function ReadOnlyValue({
 }) {
   return (
     <div className="rounded-xl border border-white/8 bg-white/[0.025] p-3">
-      <p className="text-[10px] uppercase tracking-[0.07em] text-slate-600">
+      <p className="text-[10px] uppercase tracking-[0.07em] text-slate-400">
         {label}
       </p>
 
       <p className="mt-1 text-sm font-medium text-slate-200">{value}</p>
 
       {secondary ? (
-        <p className="mt-1 text-[11px] text-amber-400/65">{secondary}</p>
+        <p className="mt-1 text-[11px] text-amber-400/85">{secondary}</p>
       ) : null}
     </div>
   );

@@ -213,12 +213,16 @@ function CancelOrderDialogContent({
       <form className="space-y-5" onSubmit={submitCancellation} noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <Label
+              htmlFor="cancel-responsable"
+              className="flex items-center gap-2 text-sm font-medium text-slate-300"
+            >
               <UserRound className="size-4 text-red-300/80" />
               Responsable
             </Label>
 
             <select
+              id="cancel-responsable"
               className={selectClass}
               value={responsableId}
               onChange={(event) => {
@@ -237,12 +241,16 @@ function CancelOrderDialogContent({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <Label
+              htmlFor="cancel-compania"
+              className="flex items-center gap-2 text-sm font-medium text-slate-300"
+            >
               <Building2 className="size-4 text-red-300/80" />
               Compañía
             </Label>
 
             <select
+              id="cancel-compania"
               className={selectClass}
               value={companiaId}
               onChange={(event) => {
@@ -264,12 +272,16 @@ function CancelOrderDialogContent({
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
-            <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <Label
+              htmlFor="cancel-ruta"
+              className="flex items-center gap-2 text-sm font-medium text-slate-300"
+            >
               <RouteIcon className="size-4 text-red-300/80" />
               Ruta
             </Label>
 
             <select
+              id="cancel-ruta"
               className={selectClass}
               value={rutaId}
               onChange={(event) => {
@@ -293,12 +305,16 @@ function CancelOrderDialogContent({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+          <Label
+            htmlFor="cancel-detalle"
+            className="flex items-center gap-2 text-sm font-medium text-slate-300"
+          >
             <FileText className="size-4 text-red-300/80" />
             Detalle / motivo
           </Label>
 
           <Textarea
+            id="cancel-detalle"
             value={detalle}
             onChange={(event) => {
               setDetalle(event.target.value);
@@ -307,18 +323,22 @@ function CancelOrderDialogContent({
             rows={3}
             maxLength={1000}
             disabled={loading}
-            className="min-h-[96px] resize-none rounded-xl border-white/10 bg-[#07111F]/90 px-4 py-3 text-base text-slate-100 placeholder:text-slate-600 focus-visible:border-red-400/45 focus-visible:ring-red-400/10"
+            className="min-h-[96px] resize-none rounded-xl border-white/10 bg-[#07111F]/90 px-4 py-3 text-base text-slate-100 placeholder:text-slate-400 focus-visible:border-red-400/45 focus-visible:ring-red-400/10"
             placeholder="Indique por qué se cancela el pedido"
           />
         </div>
 
         <div className="space-y-2 rounded-xl border border-red-400/15 bg-red-400/[0.035] p-4">
-          <Label className="flex items-center gap-2 text-sm font-semibold text-red-200">
+          <Label
+            htmlFor="cancel-factura"
+            className="flex items-center gap-2 text-sm font-semibold text-red-200"
+          >
             <ScanLine className="size-4" />
             Factura — escanear al final
           </Label>
 
           <Input
+            id="cancel-factura"
             ref={facturaRef}
             value={factura}
             onChange={(event) => {
@@ -332,7 +352,7 @@ function CancelOrderDialogContent({
             autoComplete="off"
             disabled={loading}
             placeholder="Escanee la factura para cancelar"
-            className="h-12 rounded-xl border-red-400/25 bg-[#07111F] px-4 text-base text-slate-100 placeholder:text-base placeholder:text-slate-600 focus-visible:border-red-400/70 focus-visible:ring-red-400/15"
+            className="h-12 rounded-xl border-red-400/25 bg-[#07111F] px-4 text-base text-slate-100 placeholder:text-base placeholder:text-slate-400 focus-visible:border-red-400/70 focus-visible:ring-red-400/15"
           />
 
           <p className="text-xs leading-5 text-slate-400">

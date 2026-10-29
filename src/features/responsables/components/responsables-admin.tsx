@@ -126,7 +126,7 @@ export function ResponsablesAdmin({ role }: { role: UserRole }) {
           <h2 className="text-base font-semibold text-slate-100">
             Responsables / alistadores
           </h2>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-slate-400">
             Personal disponible para el flujo operativo.
           </p>
         </div>
@@ -147,7 +147,7 @@ export function ResponsablesAdmin({ role }: { role: UserRole }) {
 
       <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0B1626]/72 shadow-[0_16px_50px_rgba(0,0,0,.2)] backdrop-blur-xl">
         <table className="w-full text-xs">
-          <thead className="bg-[#101C2C]/95 text-left text-[10px] uppercase tracking-[0.06em] text-slate-500">
+          <thead className="bg-[#101C2C]/95 text-left text-[10px] uppercase tracking-[0.06em] text-slate-400">
             <tr>
               <th className="p-3">Gafete</th>
               <th className="p-3">Nombre</th>
@@ -171,7 +171,7 @@ export function ResponsablesAdmin({ role }: { role: UserRole }) {
                     className={`rounded-md border px-2 py-1 text-[10px] ${
                       row.activo
                         ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
-                        : "border-white/8 bg-white/[0.03] text-slate-500"
+                        : "border-white/8 bg-white/[0.03] text-slate-400"
                     }`}
                   >
                     {row.activo ? "Activo" : "Inactivo"}
@@ -220,7 +220,7 @@ export function ResponsablesAdmin({ role }: { role: UserRole }) {
 
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-10 text-center text-slate-600">
+                <td colSpan={4} className="p-10 text-center text-slate-400">
                   No hay responsables registrados.
                 </td>
               </tr>

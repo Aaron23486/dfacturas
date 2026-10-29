@@ -33,7 +33,7 @@ function DashboardStatusDonutComponent({ data, selectedId, onSelect }: Props) {
         <h2 className="text-sm font-semibold text-slate-100">
           Distribución por estado
         </h2>
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-slate-400">
           Estado actual de las facturas del período
         </p>
       </div>
@@ -117,7 +117,7 @@ function DashboardStatusDonutComponent({ data, selectedId, onSelect }: Props) {
             className={[
               "inline-flex items-center gap-2 text-[10px] transition",
               selectedId && selectedId !== item.id
-                ? "text-slate-600"
+                ? "text-slate-400"
                 : "text-slate-400 hover:text-slate-200",
             ].join(" ")}
           >

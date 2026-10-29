@@ -211,13 +211,13 @@ function FloatingMetricsComponent({ data }: { data: DailyKpis }) {
               <p className="text-xs font-semibold text-slate-100">
                 Métricas del día
               </p>
-              <p className="text-[10px] text-slate-600">{formatToday()}</p>
+              <p className="text-[10px] text-slate-400">{formatToday()}</p>
             </div>
 
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.05] hover:text-slate-300"
+              className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-300"
               aria-label="Cerrar métricas"
             >
               <X className="size-3.5" />
@@ -248,7 +248,7 @@ function FloatingMetricsComponent({ data }: { data: DailyKpis }) {
           </div>
 
           <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.025] p-3">
-            <div className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.07em] text-slate-600">
+            <div className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.07em] text-slate-400">
               <Medal className="size-3 text-amber-300" />
               Ranking
             </div>
@@ -300,7 +300,7 @@ function Metric({
   return (
     <div className="rounded-xl border border-white/7 bg-white/[0.025] p-2.5">
       <Icon className="mb-2 size-3.5 text-amber-400" />
-      <p className="text-[9px] uppercase tracking-[0.06em] text-slate-600">
+      <p className="text-[9px] uppercase tracking-[0.06em] text-slate-400">
         {label}
       </p>
       <p className="mt-0.5 text-sm font-semibold text-slate-100">{value}</p>
@@ -316,7 +316,7 @@ function Ranking({ number, name }: { number: number; name: string }) {
           "grid size-5 place-items-center rounded-md border text-[9px] font-bold",
           number === 1
             ? "border-amber-300/25 bg-amber-300/10 text-amber-300"
-            : "border-white/8 bg-white/[0.03] text-slate-500",
+            : "border-white/8 bg-white/[0.03] text-slate-400",
         ].join(" ")}
       >
         {number}

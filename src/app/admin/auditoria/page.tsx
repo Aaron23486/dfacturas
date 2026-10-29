@@ -7,20 +7,23 @@ export default async function Page() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("audit_logs")
-    .select("*")
+    .select("id, created_at, table_name, action, record_id, changed_by")
     .order("created_at", { ascending: false })
     .limit(100);
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Auditoría</h1>
-        <p className="text-sm text-muted-foreground">
-          Últimos cambios sensibles.
-        </p>
+        <h1 className="text-lg font-semibold text-slate-100">Auditoría</h1>
+        <p className="text-xs text-slate-400">Últimos cambios sensibles.</p>
       </div>
-      <div className="overflow-x-auto rounded-xl border bg-white/85">
-        <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-muted/50 text-left">
+      <div
+        className="overflow-x-auto rounded-2xl border border-white/8 bg-[#0B1626]/74"
+        tabIndex={0}
+        role="region"
+        aria-label="Registro de auditoría"
+      >
+        <table className="w-full min-w-[900px] text-sm text-slate-300">
+          <thead className="bg-[#101C2C]/95 text-left text-[10px] uppercase tracking-[0.06em] text-slate-400">
             <tr>
               <th className="p-3">Fecha</th>
               <th className="p-3">Tabla</th>
@@ -31,7 +34,7 @@ export default async function Page() {
           </thead>
           <tbody>
             {(data ?? []).map((x) => (
-              <tr key={x.id} className="border-t">
+              <tr key={x.id} className="border-t border-white/6">
                 <td className="p-3">{formatDateTime(x.created_at)}</td>
                 <td className="p-3">{x.table_name}</td>
                 <td className="p-3">{x.action}</td>

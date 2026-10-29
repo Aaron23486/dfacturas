@@ -385,7 +385,7 @@ export function DashboardClient() {
       >
         <div>
           <h1 className="text-lg font-semibold text-slate-100">Dashboard</h1>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-slate-400">
             Analítica administrativa y comportamiento del flujo de despachos.
           </p>
         </div>
@@ -429,7 +429,7 @@ export function DashboardClient() {
           <div className="space-y-0.5">
             <label
               htmlFor="dashboard-from"
-              className="block text-[9px] font-medium uppercase tracking-[0.06em] text-slate-600"
+              className="block text-[9px] font-medium uppercase tracking-[0.06em] text-slate-400"
             >
               Desde
             </label>
@@ -446,7 +446,7 @@ export function DashboardClient() {
           <div className="space-y-0.5">
             <label
               htmlFor="dashboard-to"
-              className="block text-[9px] font-medium uppercase tracking-[0.06em] text-slate-600"
+              className="block text-[9px] font-medium uppercase tracking-[0.06em] text-slate-400"
             >
               Hasta
             </label>
@@ -498,7 +498,7 @@ export function DashboardClient() {
             key={String(label)}
             className="rounded-xl border border-white/8 bg-[#0B1626]/70 px-3 py-2 shadow-[0_12px_30px_rgba(0,0,0,.16)] backdrop-blur-xl"
           >
-            <p className="text-[9px] uppercase tracking-[0.06em] text-slate-600">
+            <p className="text-[9px] uppercase tracking-[0.06em] text-slate-400">
               {label}
             </p>
             <p className="mt-0.5 text-base font-semibold text-slate-100">

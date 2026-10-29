@@ -19,7 +19,7 @@ function toneClasses(tone: DialogTone) {
     case "danger":
       return {
         icon: "border-red-400/30 bg-red-500/10 text-red-300",
-        button: "bg-red-500 text-white hover:bg-red-400",
+        button: "bg-red-600 text-white hover:bg-red-700",
       };
     case "warning":
       return {
@@ -120,7 +120,7 @@ export function AppDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-slate-200"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
             aria-label="Cerrar"
           >
             <X className="size-4" />

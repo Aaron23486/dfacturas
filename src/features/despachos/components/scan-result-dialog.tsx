@@ -85,7 +85,7 @@ export function ScanResultDialog({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4 text-xs">
-      <span className="text-slate-500">{label}</span>
+      <span className="text-slate-400">{label}</span>
       <span className="max-w-[65%] text-right font-medium text-slate-200">
         {value}
       </span>
