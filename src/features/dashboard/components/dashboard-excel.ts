@@ -222,8 +222,8 @@ function buildDispatchSheet(rows: DashboardExportRow[]) {
         .map((value, colIndex) => {
           const ref = `${colName(colIndex)}${excelRow}`;
 
-          // Factura is ALWAYS an inline string. This prevents scientific notation
-          // and preserves every digit exactly.
+          // La factura va SIEMPRE como texto: así Excel no la muestra en notación
+          // científica y conserva los 20 dígitos.
           if (colIndex === 0) {
             return inlineStringCell(ref, String(value ?? ""), 2);
           }

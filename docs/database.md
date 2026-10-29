@@ -22,16 +22,17 @@ erDiagram
 
 ### Tables
 
-| Table            | Purpose                                                                |
-| ---------------- | ---------------------------------------------------------------------- |
-| `profiles`       | application role and active state for an Auth user                     |
-| `responsables`   | personnel responsible for dispatch preparation                         |
-| `companias`      | company/client catalog                                                 |
-| `rutas`          | routes associated with a company                                       |
-| `transportistas` | carrier catalog, including the special `CLIENTE RETIRA` flag           |
-| `vehiculos`      | vehicles/plates associated with a carrier                              |
-| `despachos`      | operational invoice dispatch state and timestamps                      |
-| `audit_logs`     | immutable-style record of sensitive row changes from database triggers |
+| Table               | Purpose                                                                     |
+| ------------------- | --------------------------------------------------------------------------- |
+| `profiles`          | application role and active state for an Auth user                          |
+| `responsables`      | personnel responsible for dispatch preparation                              |
+| `companias`         | company/client catalog                                                      |
+| `rutas`             | routes associated with a company                                            |
+| `transportistas`    | carrier catalog, including the special `CLIENTE RETIRA` flag                |
+| `vehiculos`         | vehicles/plates associated with a carrier                                   |
+| `despachos`         | operational invoice dispatch state and timestamps                           |
+| `audit_logs`        | immutable-style record of sensitive row changes from database triggers      |
+| `dashboard_exports` | append-only record of every Excel export (who, when, period, filters, rows) |
 
 ## Enums
 
@@ -84,6 +85,8 @@ This avoids coupling a business invariant to a UI label string.
 
 ## Migration history
 
+Migrations are applied in order by `npm run db:up` / `npm run db:reset` (local) or `supabase db push` (hosted). All of them apply to an empty database; CI checks this on every change.
+
 The repository currently contains five applied forward-only migrations:
 
 | Version                                        | Purpose                                                                                                               |
@@ -93,10 +96,14 @@ The repository currently contains five applied forward-only migrations:
 | `20260930000003_dispatch_rpcs.sql`             | transactional dispatch RPCs                                                                                           |
 | `20261002000004_original_ui_compatibility.sql` | compatibility/admin RPCs and dashboard analytics/export functions                                                     |
 | `20261004000005_security_hardening.sql`        | least-privilege hardening, inactive-by-default users, soft-delete visibility, text limits and stricter RPC validation |
+| `20261029000006_realtime_dispatch_feed.sql`    | adds `despachos` to the `supabase_realtime` publication so the live history receives events                           |
+| `20261029000007_keep_an_active_admin.sql`      | trigger that rejects demoting, deactivating or deleting the last active `ADMIN`                                       |
+| `20261029000008_require_live_session.sql`      | `has_live_session()`; `is_active_user()` and `current_user_role()` require the token's Auth session to exist          |
+| `20261029000009_audit_and_limit_exports.sql`   | `dashboard_exports`; export limited to 366 days and recorded; query moved to an internal function                     |
 
 ### Rule: migrations are immutable after application
 
-Do not edit, reorder, reset or “repair” migrations `001`–`005` after they have been applied to an environment. Future schema changes should use a new migration with a later version.
+Do not edit, reorder or “repair” a migration once it is on `main`. Every schema change is a new migration with a later version.
 
 ## Authorization helpers
 
@@ -107,8 +114,9 @@ The database defines helpers including:
 - `is_operativo()`
 - `is_active_user()`
 - `require_active_user()`
+- `has_live_session()`
 
-These centralize role/active-profile checks used by RLS policies and RPCs.
+These centralize role and active-profile checks used by RLS policies and RPCs. Since migration 008 the active-user and role helpers also require the JWT's `session_id` to exist in `auth.sessions`, so signing out cuts database access at once.
 
 ## Dispatch RPCs
 
@@ -123,7 +131,7 @@ Compatibility/admin functions support UI parity while preserving database author
 
 ## Concurrency control
 
-`scan_dispatch` serializes concurrent work for a specific invoice before evaluating the current row/state. The goal is to prevent simultaneous scans from both making decisions against the same stale dispatch state.
+`scan_dispatch` and `cancel_dispatch` take a transaction-level advisory lock on the invoice (`pg_advisory_xact_lock`) and then lock the current row (`FOR UPDATE`) before deciding. Five simultaneous scans of a new invoice end with one `DESPACHADA` row (integration test). Profile changes that could remove the last administrator are serialized with their own advisory lock.
 
 ## RLS and direct privileges
 
@@ -144,6 +152,8 @@ Database triggers write sensitive row changes to `audit_logs` with:
 
 `audit_logs` is readable only by `ADMIN` through RLS and is not directly writable by browser clients.
 
+`dashboard_exports` records each Excel export. Only administrators can read it, and a trigger rejects updates and deletes, also for the service role. Neither log has a foreign key to the acting user, so records outlive deleted accounts.
+
 ## Seed/data policy
 
-No real production data belongs in the repository. The committed seed directory is intentionally empty apart from repository placeholders. Demo environments should use fictional records only.
+No real data belongs in the repository and there is no SQL seed. `npm run demo:setup` creates fictional companies, routes, responsible staff, carriers and about 240 dispatches over five months on a local database only; invoices start with `99`. Integration tests use the prefix `77` and end-to-end tests `88`, and both remove their data.

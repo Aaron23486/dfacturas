@@ -26,9 +26,8 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
-  // Do not force authenticated users away from /login here.
-  // An inactive or malformed profile may still have an Auth session;
-  // the login page decides whether the session is authorized for the app.
+  // No se saca de /login a quien tiene sesión: un perfil inactivo o incompleto puede
+  // tener sesión de Auth, y es la página de ingreso la que decide si puede usar la app.
   response.headers.set("Content-Security-Policy", csp);
   return response;
 }

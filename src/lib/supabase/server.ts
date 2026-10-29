@@ -27,7 +27,7 @@ export async function createClient() {
             cookieStore.set(name, value, withSessionLifetime(options)),
           );
         } catch {
-          // Server Components cannot always write cookies; proxy refreshes the session.
+          // Los Server Components no siempre pueden escribir cookies; el proxy renueva la sesión.
         }
       },
     },

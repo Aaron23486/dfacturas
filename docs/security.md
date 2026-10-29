@@ -1,204 +1,69 @@
 # Security
 
-## Security objective
+This document lists the controls in place, how they are verified and the risks that remain. To report a vulnerability, see [SECURITY.md](../SECURITY.md).
 
-DFacturas assumes that browser code is untrusted. Authentication state, hidden buttons and client-side validation improve UX, but they are not sufficient authorization controls. The database remains the security boundary for protected data and critical mutations.
+## Threat model in brief
 
-## Trust boundaries
+The browser is untrusted: it holds the user's session and talks to Supabase directly, so anything it sends can be forged. The database therefore enforces every permission and rule ([ADR 0001](decisions/0001-database-as-authorization-boundary.md)). The main browser-side risk is script injection, because the session cookie is readable by JavaScript ([ADR 0002](decisions/0002-browser-client-and-readable-session-cookie.md)).
 
-```mermaid
-flowchart LR
-    U[User / Browser\nuntrusted] --> N[Next.js application]
-    N --> A[Supabase Auth]
-    N --> D[Supabase Data API]
-    D --> P[(PostgreSQL)]
-    P --> R[RLS + grants]
-    P --> F[validated RPCs]
-    P --> C[constraints + triggers]
-```
+## Authentication and sessions
 
-## Authentication
+| Control                                                                                                               | Where                                | Verified by                     |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------- |
+| Email and password through Supabase Auth; no public sign-up, no anonymous sign-in                                     | `supabase/config.toml`               | Integration (`access.test.ts`)  |
+| New identities are inactive `OPERATIVO` profiles; roles never come from metadata                                      | `handle_new_user()`                  | Integration                     |
+| Inactive or profile-less accounts are signed out with a generic message                                               | `src/app/login/actions.ts`           | E2E, integration                |
+| Session cookie: 12 h, `SameSite=Lax`, `Secure` in production                                                          | `src/lib/supabase/cookie-options.ts` | Unit, E2E                       |
+| Auth session: 12 h maximum, 4 h idle; `secure_password_change`                                                        | `config.toml`                        | Configuration                   |
+| Sign-out revokes database access immediately                                                                          | `has_live_session()` (migration 008) | Integration (`session.test.ts`) |
+| Terminal-created passwords: 12+ characters with letters and digits; demo passwords from `crypto.randomInt` (~93 bits) | `scripts/lib/passwords.mts`          | Unit                            |
 
-Supabase Auth provides email/password authentication. Application routes load the current Auth user and corresponding `profiles` row.
+## Authorization
 
-`requireProfile()` rejects missing or inactive profiles. `requireAdmin()` rejects non-admin profiles for admin-only server routes.
+| Control                                                                                                 | Where                                          | Verified by           |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------- |
+| RLS on every table; `anon` has no table privileges                                                      | migrations 002, 005                            | Integration           |
+| Dispatch, carrier and plate writes only through RPCs                                                    | migrations 003–005                             | Integration           |
+| RPCs are `SECURITY DEFINER` with a fixed `search_path` and check session, profile, role and state       | migrations 003–005, 008                        | Integration           |
+| Admin pages guarded on the server                                                                       | `requireAdmin()`                               | E2E                   |
+| Soft-deleted dispatches hidden from operators                                                           | RLS `despachos_select`                         | Integration           |
+| At least one active `ADMIN` always remains                                                              | trigger `keep_an_active_admin` (migration 007) | Integration, terminal |
+| Internal helpers (`validate_dispatch_context`, `dashboard_export_rows_query`) not executable by clients | grants                                         | Integration           |
 
-### Intended cloud settings for the closed demo
+## Input, output and integrity
 
-The deployed Supabase project is expected to use:
+- Invoice format, uniqueness, relationships, state timestamps and text limits are database constraints and triggers (R-1 to R-7); concurrent scans are serialized per invoice. Five simultaneous scans leave exactly one dispatch (integration).
+- Zod validates input at the service boundary; the database repeats every security-relevant check.
+- Errors shown to users are mapped to fixed Spanish messages (`safe-error.ts`); SQL text never reaches the UI.
+- The Excel export writes every value as an inline string, escapes XML and prefixes text starting with `=`, `+`, `@` or a dash followed by a non-digit (unit tests).
+- Sensitive table changes are recorded in `audit_logs` by trigger, with the acting user; exports are recorded in the append-only `dashboard_exports`.
 
-- Email auth: enabled.
-- Public signup: disabled.
-- Anonymous sign-in: disabled.
-- Manual identity linking: disabled unless explicitly required.
-- Rate limits: enabled.
-- Leaked-password protection: enabled when available for the project plan/configuration.
-- CAPTCHA: optional; do not enable until the login flow sends the required CAPTCHA token.
-- Site URL: the exact deployed application URL.
-- Redirect allow-list: minimal, with no unnecessary broad wildcards.
+## Browser hardening
 
-Cloud dashboard settings are deployment configuration and are not fully represented by SQL migrations; they must be reviewed per environment.
+- Per-request nonce CSP with `'strict-dynamic'` and no inline scripts; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` ([ADR 0004](decisions/0004-per-request-nonce-csp.md)). An end-to-end test confirms that an injected handler does not run.
+- `Strict-Transport-Security` (production), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`; no `X-Powered-By`.
+- Server Actions reject requests from another origin (Next.js CSRF protection, checked manually).
 
-## Profile creation and privilege escalation
+## Logging
 
-`handle_new_user()` creates a profile with:
+`src/lib/security/events.ts` writes one JSON line per security event (`login.failed`, `login.denied_inactive`, `login.denied_without_profile`, `admin.access_denied`) to stderr, with the user id or a SHA-256 fingerprint of the email, never the address, password or token.
 
-- role: `OPERATIVO`;
-- active: `false`.
+## Secrets and supply chain
 
-It intentionally does not accept a role from client-controlled user metadata. This is defense in depth: even if public signup were accidentally re-enabled, a new Auth identity would not immediately become an active operational user.
+- Only the Supabase URL and publishable key reach the browser (`NEXT_PUBLIC_*`). The secret key is read from `supabase status` by the terminal scripts and never written to `.env.local`.
+- `.env*` (except `.env.example`), Supabase local state and test artifacts are ignored by Git.
+- CI runs `npm audit --audit-level=high` and gitleaks over the full history; dependencies are pinned and updated through Dependabot pull requests that pass CI.
 
-Admin elevation/activation must be an explicit administrative action outside client-controlled signup metadata.
+## Residual risks and accepted limitations
 
-## RLS
+| Risk                                                                                                                                           | Mitigation                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| The session cookie is readable by JavaScript (browser client design).                                                                          | Nonce CSP, 12 h lifetime, immediate revocation.                                               |
+| A valid session can change its own password through the Auth API without the current one (Supabase asks for reauthentication only after 24 h). | Short sessions, revocation, CSP; recovery and resets are terminal tasks.                      |
+| Login throttling relies on Supabase Auth's per-IP limits (`sign_in_sign_ups`, 30 per 5 minutes locally); the app adds none.                    | Enable CAPTCHA on the hosted project if it is exposed publicly.                               |
+| The Auth recovery and magic-link endpoints are enabled but unused by the UI.                                                                   | Keep email rate limits low; customize or disable those templates on a hosted project.         |
+| Authenticated users can read the PostgREST OpenAPI description (function names).                                                               | No secrets in it; disable `pg_graphql` on hosted projects if unused.                          |
+| The local Supabase publishes PostgreSQL, Studio and Mailpit on all interfaces.                                                                 | Development only: use trusted networks and stop it with `npm run db:down`.                    |
+| An operator can soft-delete any dispatch still in `ATENDIENDO` without giving a reason (an automatic reason is stored).                        | Business rule kept as designed; the author and time are recorded in the row and `audit_logs`. |
 
-RLS is enabled on:
-
-- `profiles`
-- `responsables`
-- `companias`
-- `rutas`
-- `transportistas`
-- `vehiculos`
-- `despachos`
-- `audit_logs`
-
-Policies use authenticated identity and database authorization helpers rather than trusting request payload role claims.
-
-## Least privilege
-
-Migration `005` strengthens privilege boundaries by:
-
-- revoking `CREATE` on the `public` schema from public/anonymous/authenticated roles;
-- revoking default public function execution;
-- revoking anonymous execution for application RPCs;
-- granting only the specific RPC execution needed by authenticated sessions;
-- making the internal `validate_dispatch_context(...)` helper non-executable by authenticated clients;
-- removing direct authenticated insert/update privileges on `transportistas` and `vehiculos`.
-
-## Critical mutation boundary
-
-Direct browser writes are not used for the dispatch state machine. Critical operations go through functions such as:
-
-```text
-scan_dispatch
-cancel_dispatch
-admin_update_dispatch
-admin_soft_delete_dispatch
-```
-
-These functions validate authentication/role, current state and relational context before applying the mutation.
-
-## RPC search path
-
-Privileged security-definer functions in the hardening layer set a restricted search path (`pg_catalog, public`) to reduce object-resolution ambiguity inside privileged execution.
-
-## Soft-delete visibility
-
-`despachos_select` allows:
-
-- admins to inspect rows required for administrative/history use;
-- active non-admin users to read only rows where `deleted_at IS NULL`.
-
-Application repository queries also filter soft-deleted rows during normal operational listing. The RLS policy is the security control; the repository filter is an additional behavior-level safeguard.
-
-## Input validation
-
-Defense is layered:
-
-1. React/form UX constraints where applicable.
-2. Zod schemas at application boundaries.
-3. RPC validation for stateful/privileged operations.
-4. PostgreSQL constraints, foreign keys and triggers for final integrity.
-
-Examples include UUID validation, 20-digit invoices, 1000-character detail limits, valid route/company pairs and valid carrier/vehicle pairs.
-
-## Error handling
-
-`src/lib/errors/safe-error.ts` maps known database/domain failures to controlled user-facing messages. Unknown internal errors fall back to generic messages instead of displaying raw database details.
-
-The login page uses an allow-listed error-code-to-message map rather than echoing arbitrary `?error=` text.
-
-## Audit logging
-
-Database triggers record sensitive row changes in `audit_logs`. The browser has no direct write path to the audit table, and only `ADMIN` can read it through RLS.
-
-## Secrets
-
-### Allowed in browser configuration
-
-Only public project identifiers/keys intended for client use:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-```
-
-### Never commit or expose in browser code
-
-- Supabase `service_role` keys;
-- `sb_secret_*` keys;
-- database passwords/connection strings with credentials;
-- JWT signing secrets;
-- private keys/certificates;
-- GitHub tokens;
-- `.env.local`.
-
-The public `.env.example` contains placeholders only.
-
-## Repository hygiene
-
-`.gitignore` excludes local/runtime artifacts including:
-
-- `.env*` except `.env.example`;
-- `node_modules`;
-- `.next`;
-- `backups`;
-- `supabase/.temp`;
-- `.vercel`;
-- certificates/private-key extensions;
-- `*.bak`, logs and build metadata.
-
-A pre-publication gate additionally scans tracked files and source content for common secret patterns.
-
-## Database hardening verifier
-
-The repository includes:
-
-```text
-supabase/tests/20261004000005_security_hardening_verify.sql
-```
-
-It is intentionally read-only apart from raising exceptions/notices. It verifies a subset of post-migration security expectations, including:
-
-- `public` schema create privileges revoked from client roles;
-- inactive-by-default profile creation;
-- direct carrier/vehicle writes removed;
-- soft-delete filtering present in the dispatch RLS policy;
-- dispatch text-length constraints present;
-- anonymous `scan_dispatch` execution revoked;
-- authenticated `scan_dispatch` execution present;
-- internal context validator not executable by authenticated users.
-
-Passing this verifier does not prove the entire application is free of vulnerabilities; it proves the listed controls are present in that database environment.
-
-## Dependency audit statement
-
-At the validated pre-publication gate, `npm audit --omit=dev` reported **0 production dependency vulnerabilities**. Development-tool advisories, if any appear in future full audits, must be evaluated separately and should not be “fixed” by forcing incompatible dependency downgrades/upgrades without regression testing.
-
-## Threats specifically addressed
-
-- unauthorized role access;
-- anonymous Data API access;
-- direct mutation bypass of UI controls;
-- stale/concurrent dispatch scans;
-- invalid catalog relationships;
-- exposure of soft-deleted operational rows;
-- role escalation through signup metadata;
-- raw database error disclosure;
-- accidental secret publication;
-- unaudited sensitive row changes.
-
-## Out of scope / operational responsibilities
-
-Security still depends on deployment practices outside this repository, including account MFA, Supabase/Vercel account security, secret rotation, HTTPS/TLS, backup policy, platform availability, monitoring and timely dependency updates.
+No review guarantees the absence of vulnerabilities; these controls reduce risk and are covered by the tests listed in [testing.md](testing.md).

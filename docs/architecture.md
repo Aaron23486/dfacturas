@@ -1,200 +1,99 @@
 # Architecture
 
-## Purpose
+## Principles
 
-DFacturas is organized to keep operational UI, business rules, data access and authorization concerns separate. The design is deliberately pragmatic: the project uses clear boundaries where they improve correctness and maintainability, without adding abstract layers that have no concrete responsibility.
+- **The database decides.** Authorization and business rules live in PostgreSQL; the UI mirrors them for usability only (D-1).
+- **Thin layers with a job each.** Routes compose pages, features render, services orchestrate, repositories talk to Supabase, domain modules hold pure rules. No layer exists without a responsibility.
+- **Reproducible by default.** The same local Supabase stack serves development, tests and CI (D-3).
+- **Secure by default in the browser.** Strict CSP, bounded sessions and safe error messages (D-2, D-4, D-5).
 
-## Runtime flow
-
-```mermaid
-flowchart TD
-    B[Browser] --> N[Next.js App Router]
-    N --> F[Feature components]
-    F --> S[Services / use cases]
-    S --> D[Pure domain rules]
-    S --> R[Repositories]
-    R --> C[Supabase client]
-    C --> P[(PostgreSQL)]
-    P --> RLS[RLS / grants]
-    P --> RPC[RPC functions]
-    P --> CON[Constraints / triggers]
-    P --> AUD[Audit log]
-```
-
-Not every request traverses every box. For example, a route guard can call an auth repository directly through `auth.service.ts`, while a UI component can read catalog data through a catalog service/repository. The important invariant is that protected operations still end at a database boundary that enforces authorization.
-
-## Layer responsibilities
-
-### `src/app`
-
-Next.js routes, layouts and server-side access boundaries.
-
-Examples:
-
-- `src/app/page.tsx` redirects authenticated users to `/app` and unauthenticated users to `/login`.
-- `src/app/app/page.tsx` requires an active profile before rendering the dispatch workspace.
-- `src/app/admin/dashboard/page.tsx` requires `ADMIN`.
-- `src/app/admin/auditoria/page.tsx` requires `ADMIN`.
-
-### `src/features`
-
-Feature-specific presentation and, when useful, feature-local domain logic.
-
-Examples:
-
-- `features/despachos/components/*` — scan workspace, KPIs, table and dialogs.
-- `features/dashboard/components/*` — analytics visualization and Excel export.
-- `features/configuracion/components/*` — company/route administration.
-- `features/despachos/domain/dispatch.rules.ts` — scan-decision mapping used by the feature.
-
-### `src/domain`
-
-Pure rules that do not require React, Next.js or Supabase.
-
-Examples:
-
-- `domain/auth/auth.rules.ts`
-- `domain/dispatch/invoice.rules.ts`
-- `domain/dispatch/scan.rules.ts`
-
-Because these rules are infrastructure-independent, they are inexpensive to unit test.
-
-### `src/services`
-
-Use-case orchestration and application-level access guards.
-
-Examples:
-
-- `requireUser`, `requireProfile`, `requireAdmin` in `auth.service.ts`.
-- `processFacturaScan` in `scan.service.ts`.
-- catalog/admin services re-export or orchestrate repository operations without putting SQL/Data API details in components.
-
-### `src/repositories`
-
-Supabase Data API and RPC adapters. Repositories translate persistence shapes into application shapes and centralize data-access errors.
-
-Examples:
-
-- `dispatch.repository.ts` reads dispatch history and invokes protected dispatch RPCs.
-- `catalog.repository.ts` maps database rows into catalog types.
-- `admin.repository.ts` uses compatibility/admin RPCs for controlled mutations.
-
-### `src/schemas`
-
-Zod schemas validate untrusted application input before orchestration reaches repositories. Database constraints/RPC validation still repeat security-critical invariants because browser validation is not a trust boundary.
-
-### `src/lib`
-
-Cross-cutting infrastructure:
-
-- browser/server Supabase client construction;
-- safe error translation;
-- shared utilities/date formatting.
-
-## Authorization path
+## System overview
 
 ```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Next.js/UI
-    participant S as Service
-    participant DB as PostgreSQL
-
-    U->>UI: request/action
-    UI->>S: use case
-    S->>DB: query or RPC with auth session
-    DB->>DB: grant + RLS / role check
-    DB->>DB: validate state and relational invariants
-    DB-->>S: allowed result or controlled error
-    S-->>UI: application result
+flowchart LR
+    B[Browser] -->|pages, server actions| N[Next.js 16<br/>proxy + App Router]
+    B -->|queries, RPC, Realtime<br/>with the user's session| S[Supabase<br/>Auth · PostgREST · Realtime]
+    N -->|session check, profile| S
+    S --> P[(PostgreSQL 17<br/>RLS · RPC · constraints · triggers)]
+    T[Terminal scripts<br/>users · demo:setup] -->|secret key from the CLI| S
 ```
 
-UI role checks are convenience controls. Database policies/functions are the authorization boundary.
+Next.js renders pages, runs the login and logout server actions and guards routes. The interactive screens query Supabase directly from the browser with the signed-in user's session; PostgreSQL applies RLS and the RPCs validate every change. Terminal scripts are the only holders of the secret key.
 
-## SOLID-oriented design
+## Request paths
 
-DFacturas does not claim that every SOLID pattern requires an interface or class. It applies the principles where they have concrete value.
+1. **Page request.** `src/proxy.ts` creates a CSP nonce, refreshes the Supabase session and redirects to `/login` without a user. The page calls `requireProfile()` or `requireAdmin()` (`src/services/auth.service.ts`), which read the profile with the user's session.
+2. **Scan.** `DispatchWorkspace` validates the invoice with the domain rules, `processFacturaScan` (`src/services/scan.service.ts`) reads the current dispatch and calls `scan_dispatch`. The RPC locks the invoice (`pg_advisory_xact_lock`), checks the session, profile and context, and inserts or closes the dispatch.
+3. **Live history.** The workspace subscribes to `postgres_changes` on `despachos`; RLS decides which rows each subscriber receives.
+4. **Export.** The dashboard calls `admin_dashboard_export_rows`, which checks the role and period, records the export and returns rows; the browser builds the workbook.
 
-### Single Responsibility Principle
+## Code structure
 
-Examples:
+| Path                                      | Responsibility                                                                                                                      |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app`                                 | Routes, layouts and the login server actions. Pages guard access and compose features.                                              |
+| `src/features/*/components`               | Feature UI: dispatch workspace, history table and dialogs; dashboard and Excel export; configuration; responsables; transportistas. |
+| `src/components/ui`, `src/components/app` | Reusable primitives (shadcn/Base UI) and application composites (shell, navigation, dialog, status badge).                          |
+| `src/domain`                              | Pure rules without React or Supabase: invoice format (R-1), scan decision (FR-3, FR-4), roles.                                      |
+| `src/services`                            | Use-case orchestration and access guards.                                                                                           |
+| `src/repositories`                        | Supabase queries and RPC calls, mapping rows to application types and errors to safe messages.                                      |
+| `src/schemas`                             | Zod validation of untrusted input before it reaches a repository.                                                                   |
+| `src/lib`                                 | Supabase clients and cookie options, CSP, security events, safe errors, utilities.                                                  |
+| `supabase/migrations`                     | Forward-only schema history (see [database.md](database.md)).                                                                       |
+| `scripts`                                 | Terminal tools: `env:local`, `users`, `demo:setup`, `db:verify`.                                                                    |
+| `tests/integration`, `e2e`                | Tests against the database and in the browser (see [testing.md](testing.md)).                                                       |
 
-- `invoice.rules.ts` only normalizes/validates invoice identifiers.
-- `safe-error.ts` only maps infrastructure errors into safe user-facing messages.
-- repositories own data-access concerns.
-- services own use-case orchestration.
+Components follow an Atomic Design progression (primitives → application composites → feature compositions → pages) without literal `atoms/` or `molecules/` folders.
 
-### Open/Closed and composition
+## Data model
 
-Shared application behavior is extended through composition: reusable UI primitives, app-shell components and feature-specific components can be composed without duplicating base behavior.
-
-### Interface segregation / dependency direction
-
-Components consume narrow service/repository functions instead of a global “database service”. Domain rules accept plain values/types and do not import Supabase.
-
-### Dependency inversion — pragmatic scope
-
-The domain layer depends on domain types, not Supabase. The current repository layer is implemented directly against Supabase rather than hidden behind abstract runtime interfaces; this is intentional to avoid unnecessary indirection in the current project size.
-
-## DRY
-
-Concrete shared sources include:
-
-- auth guards in `auth.service.ts`;
-- user-safe infrastructure error mapping in `safe-error.ts`;
-- reusable catalog mapping in repositories;
-- navigation configuration in `app-shell.tsx`;
-- shared visual primitives in `src/components/ui`;
-- database helper functions such as `is_admin()`, `is_active_user()` and `require_active_user()`.
-
-DRY is not used to force unrelated workflows into one generic abstraction.
-
-## Atomic Design-inspired component composition
-
-The repository uses Atomic Design as a pragmatic composition heuristic rather than a strict directory taxonomy:
-
-```text
-src/components/ui/       low-level reusable UI primitives
-src/components/app/      application-level reusable composites
-src/features/*/components domain/feature compositions
-src/app/                 route-level page composition
+```mermaid
+erDiagram
+    profiles ||--o{ despachos : "creado_por"
+    responsables ||--o{ despachos : ""
+    companias ||--o{ rutas : ""
+    companias ||--o{ despachos : ""
+    rutas ||--o{ despachos : ""
+    transportistas ||--o{ vehiculos : ""
+    transportistas ||--o{ despachos : ""
+    vehiculos ||--o{ despachos : ""
 ```
 
-This reflects the progression from reusable primitives to feature and page compositions without requiring literal `atoms/`, `molecules/`, `organisms/` directories.
+`audit_logs` receives a row for every insert, update or delete on the business tables, and `dashboard_exports` one per export. Details, constraints and helpers are in [database.md](database.md).
 
-## Single Source of Truth
+## Access matrix
 
-Critical operational truth lives as close to the data as possible:
+| Area                                           | OPERATIVO   | ADMIN              | Enforced by                                  |
+| ---------------------------------------------- | ----------- | ------------------ | -------------------------------------------- |
+| Scan, cancel                                   | Yes         | Yes                | `scan_dispatch`, `cancel_dispatch`           |
+| Correct in-progress dispatch                   | Yes         | Yes                | `compat_update_dispatch`                     |
+| Correct or soft-delete a closed dispatch       | Detail only | Yes                | `compat_*` RPC role checks (R-10)            |
+| See soft-deleted dispatches                    | No          | Yes                | RLS `despachos_select`                       |
+| Read catalogs                                  | Yes         | Yes                | RLS                                          |
+| Add carrier with plate                         | Yes         | Yes                | `compat_create_transportista_with_plate`     |
+| Edit carriers, responsables, companies, routes | No          | Yes                | RLS policies and `compat_*` RPCs             |
+| Dashboard and export                           | No          | Yes                | `requireAdmin`, `admin_dashboard_*`          |
+| Audit log, export log                          | No          | Yes                | `requireAdmin`, RLS                          |
+| Accounts and roles                             | No          | No (terminal only) | Service role, `keep_an_active_admin` trigger |
 
-- invoice format and uniqueness: PostgreSQL constraints/indexes;
-- dispatch state transitions: RPC functions and state constraints;
-- carrier/vehicle and route/company relationships: foreign keys/validators;
-- role authorization: `profiles` + authorization helpers/RLS;
-- soft-delete visibility: RLS and explicit query filters;
-- application constants/types: centralized TypeScript modules.
+## Decisions
 
-The browser may mirror rules for user experience, but cannot weaken the database invariants.
+| ID  | Decision                                                                         | Record                                                                   |
+| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| D-1 | PostgreSQL (RLS, RPC, constraints) is the authorization boundary.                | [ADR 0001](decisions/0001-database-as-authorization-boundary.md)         |
+| D-2 | Keep the browser Supabase client and bound its readable session cookie.          | [ADR 0002](decisions/0002-browser-client-and-readable-session-cookie.md) |
+| D-3 | Local Supabase stack for development and CI; accounts managed from the terminal. | [ADR 0003](decisions/0003-local-supabase-and-terminal-accounts.md)       |
+| D-4 | Per-request nonce CSP with `'strict-dynamic'`.                                   | [ADR 0004](decisions/0004-per-request-nonce-csp.md)                      |
+| D-5 | Authorization helpers require a live Auth session.                               | [ADR 0005](decisions/0005-live-session-check.md)                         |
+| D-6 | Exports are bounded to a year and recorded.                                      | [ADR 0006](decisions/0006-audited-bounded-exports.md)                    |
 
-## Concurrency
+## Stack
 
-`scan_dispatch` uses transaction-level locking around the invoice identifier before making a transition. This protects the “first scan / second scan” state machine against concurrent requests that could otherwise observe the same stale state.
-
-## Error boundary strategy
-
-Database errors are not displayed directly. Known domain/database errors are mapped to user-safe Spanish messages in `src/lib/errors/safe-error.ts`. Unknown errors fall back to generic application messages.
-
-## Navigation / access matrix
-
-| Area                               | OPERATIVO   | ADMIN                | Enforcement                        |
-| ---------------------------------- | ----------- | -------------------- | ---------------------------------- |
-| Login / logout                     | Yes         | Yes                  | Supabase Auth                      |
-| Dispatch workspace                 | Yes         | Yes                  | active-profile guard + DB controls |
-| Responsables read                  | Yes         | Yes                  | RLS                                |
-| Responsables mutation              | No          | Yes                  | DB policy/RPC + UI controls        |
-| Transportistas read                | Yes         | Yes                  | RLS                                |
-| Protected carrier/vehicle mutation | constrained | Yes/admin operations | RPC/grants + domain checks         |
-| Dashboard                          | No          | Yes                  | `requireAdmin` + admin RPC         |
-| Configuration                      | No          | Yes                  | `requireAdmin` + DB authorization  |
-| Audit log                          | No          | Yes                  | `requireAdmin` + RLS               |
-
-The exact mutation permission depends on the operation/RPC; the table intentionally avoids describing UI-only restrictions as security controls.
+| Layer         | Technology                                                        |
+| ------------- | ----------------------------------------------------------------- |
+| Framework     | Next.js 16.4 (App Router, proxy), React 19.2                      |
+| Language      | TypeScript 5.9 (strict)                                           |
+| UI            | Tailwind CSS 4, Base UI / shadcn primitives, Lucide, Recharts     |
+| Validation    | Zod 4                                                             |
+| Data and auth | Supabase (Auth, PostgREST, Realtime), PostgreSQL 17               |
+| Tooling       | Supabase CLI, Vitest 5, Playwright + axe-core, ESLint 9, Prettier |
