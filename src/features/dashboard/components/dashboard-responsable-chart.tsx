@@ -28,7 +28,7 @@ function DashboardResponsableChartComponent({
 }: Props) {
   const total = useMemo(
     () => data.reduce((sum, item) => sum + item.value, 0),
-    [data]
+    [data],
   );
 
   const chartHeight = Math.max(165, Math.min(205, data.length * 28));
@@ -59,11 +59,7 @@ function DashboardResponsableChartComponent({
                 horizontal={false}
                 stroke="rgba(255,255,255,.045)"
               />
-              <XAxis
-                type="number"
-                hide
-                allowDecimals={false}
-              />
+              <XAxis type="number" hide allowDecimals={false} />
               <YAxis
                 type="category"
                 dataKey="label"
@@ -99,16 +95,8 @@ function DashboardResponsableChartComponent({
                 {data.map((item) => (
                   <Cell
                     key={item.id}
-                    fill={
-                      selectedId === item.id
-                        ? "#FBBF24"
-                        : "#F59E0B"
-                    }
-                    opacity={
-                      selectedId && selectedId !== item.id
-                        ? 0.22
-                        : 0.9
-                    }
+                    fill={selectedId === item.id ? "#FBBF24" : "#F59E0B"}
+                    opacity={selectedId && selectedId !== item.id ? 0.22 : 0.9}
                     className="cursor-pointer"
                   />
                 ))}
@@ -122,5 +110,5 @@ function DashboardResponsableChartComponent({
 }
 
 export const DashboardResponsableChart = memo(
-  DashboardResponsableChartComponent
+  DashboardResponsableChartComponent,
 );

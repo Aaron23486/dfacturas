@@ -43,14 +43,12 @@ export function ConfiguracionAdmin() {
   const [companiaId, setCompaniaId] = useState("");
   const [numero, setNumero] = useState("");
 
-  const [deleteTarget, setDeleteTarget] =
-    useState<DeleteTarget>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
   const [loading, setLoading] = useState(false);
   const [routesLoading, setRoutesLoading] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const routesRequestIdRef = useRef(0);
 
@@ -58,11 +56,8 @@ export function ConfiguracionAdmin() {
     setCompanias(await listCompanias());
   }
 
-  async function refreshRoutes(
-    selectedCompanyId: string
-  ) {
-    const requestId =
-      ++routesRequestIdRef.current;
+  async function refreshRoutes(selectedCompanyId: string) {
+    const requestId = ++routesRequestIdRef.current;
 
     if (!selectedCompanyId) {
       setRutas([]);
@@ -74,22 +69,13 @@ export function ConfiguracionAdmin() {
     setRoutesLoading(true);
 
     try {
-      const result =
-        await listRutasByCompania(
-          selectedCompanyId
-        );
+      const result = await listRutasByCompania(selectedCompanyId);
 
-      if (
-        requestId ===
-        routesRequestIdRef.current
-      ) {
+      if (requestId === routesRequestIdRef.current) {
         setRutas(result);
       }
     } finally {
-      if (
-        requestId ===
-        routesRequestIdRef.current
-      ) {
+      if (requestId === routesRequestIdRef.current) {
         setRoutesLoading(false);
       }
     }
@@ -106,9 +92,7 @@ export function ConfiguracionAdmin() {
       })
       .catch(() => {
         if (active) {
-          setError(
-            "No se pudo cargar la configuración."
-          );
+          setError("No se pudo cargar la configuración.");
         }
       });
 
@@ -118,11 +102,8 @@ export function ConfiguracionAdmin() {
   }, []);
 
   const activeCompanies = useMemo(
-    () =>
-      companias.filter(
-        (item) => item.activo
-      ),
-    [companias]
+    () => companias.filter((item) => item.activo),
+    [companias],
   );
 
   async function executeDelete() {
@@ -134,16 +115,10 @@ export function ConfiguracionAdmin() {
     setError(null);
 
     try {
-      if (
-        deleteTarget.kind === "COMPANIA"
-      ) {
-        await deleteCompaniaConfig(
-          deleteTarget.id
-        );
+      if (deleteTarget.kind === "COMPANIA") {
+        await deleteCompaniaConfig(deleteTarget.id);
 
-        if (
-          companiaId === deleteTarget.id
-        ) {
+        if (companiaId === deleteTarget.id) {
           setCompaniaId("");
           setRutas([]);
 
@@ -152,14 +127,10 @@ export function ConfiguracionAdmin() {
 
         await refreshCompanies();
       } else {
-        await deleteRutaConfig(
-          deleteTarget.id
-        );
+        await deleteRutaConfig(deleteTarget.id);
 
         if (companiaId) {
-          await refreshRoutes(
-            companiaId
-          );
+          await refreshRoutes(companiaId);
         }
       }
 
@@ -170,7 +141,7 @@ export function ConfiguracionAdmin() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "No se pudo eliminar el registro."
+          : "No se pudo eliminar el registro.",
       );
     } finally {
       setLoading(false);
@@ -200,38 +171,27 @@ export function ConfiguracionAdmin() {
                 Compañías
               </h3>
 
-              <p className="text-[10px] text-slate-600">
-                Catálogo operativo.
-              </p>
+              <p className="text-[10px] text-slate-600">Catálogo operativo.</p>
             </div>
           </div>
 
           <div className="flex gap-2">
             <Input
               value={nombre}
-              onChange={(event) =>
-                setNombre(
-                  event.target.value
-                )
-              }
+              onChange={(event) => setNombre(event.target.value)}
               placeholder="Nueva compañía"
               className={inputClass}
             />
 
             <Button
               className="bg-amber-500 text-slate-950 hover:bg-amber-600"
-              disabled={
-                loading ||
-                !nombre.trim()
-              }
+              disabled={loading || !nombre.trim()}
               onClick={async () => {
                 setLoading(true);
                 setError(null);
 
                 try {
-                  await createCompania(
-                    nombre
-                  );
+                  await createCompania(nombre);
 
                   setNombre("");
 
@@ -240,7 +200,7 @@ export function ConfiguracionAdmin() {
                   setError(
                     cause instanceof Error
                       ? cause.message
-                      : "No se pudo crear la compañía."
+                      : "No se pudo crear la compañía.",
                   );
                 } finally {
                   setLoading(false);
@@ -253,37 +213,31 @@ export function ConfiguracionAdmin() {
           </div>
 
           <div className="mt-4 space-y-2">
-            {activeCompanies.map(
-              (compania) => (
-                <div
-                  key={compania.id}
-                  className="flex items-center justify-between rounded-xl border border-white/7 bg-white/[0.025] px-3 py-2 text-xs text-slate-300"
-                >
-                  <span>
-                    {compania.nombre}
-                  </span>
+            {activeCompanies.map((compania) => (
+              <div
+                key={compania.id}
+                className="flex items-center justify-between rounded-xl border border-white/7 bg-white/[0.025] px-3 py-2 text-xs text-slate-300"
+              >
+                <span>{compania.nombre}</span>
 
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 w-8 border-red-400/15 bg-red-400/[0.04] p-0 text-red-300 hover:bg-red-400/10"
-                    onClick={() =>
-                      setDeleteTarget({
-                        kind:
-                          "COMPANIA",
-                        id: compania.id,
-                        label:
-                          compania.nombre,
-                      })
-                    }
-                    title="Eliminar compañía"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              )
-            )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 border-red-400/15 bg-red-400/[0.04] p-0 text-red-300 hover:bg-red-400/10"
+                  onClick={() =>
+                    setDeleteTarget({
+                      kind: "COMPANIA",
+                      id: compania.id,
+                      label: compania.nombre,
+                    })
+                  }
+                  title="Eliminar compañía"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -294,9 +248,7 @@ export function ConfiguracionAdmin() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-slate-100">
-                Rutas
-              </h3>
+              <h3 className="text-sm font-semibold text-slate-100">Rutas</h3>
 
               <p className="text-[10px] text-slate-600">
                 Asociadas a una compañía.
@@ -314,48 +266,28 @@ export function ConfiguracionAdmin() {
                 className="h-10 w-full rounded-lg border border-white/10 bg-[#07111F]/85 px-3 text-xs text-slate-200 outline-none focus:border-amber-500/40"
                 value={companiaId}
                 onChange={(event) => {
-                  const nextCompanyId =
-                    event.target.value;
+                  const nextCompanyId = event.target.value;
 
-                  setCompaniaId(
-                    nextCompanyId
-                  );
+                  setCompaniaId(nextCompanyId);
 
                   setNumero("");
                   setError(null);
                   setRutas([]);
 
-                  void refreshRoutes(
-                    nextCompanyId
-                  ).catch(() => {
+                  void refreshRoutes(nextCompanyId).catch(() => {
                     setRutas([]);
 
-                    setError(
-                      "No se pudieron cargar las rutas de la compañía."
-                    );
+                    setError("No se pudieron cargar las rutas de la compañía.");
                   });
                 }}
               >
-                <option value="">
-                  Seleccionar
-                </option>
+                <option value="">Seleccionar</option>
 
-                {activeCompanies.map(
-                  (compania) => (
-                    <option
-                      key={
-                        compania.id
-                      }
-                      value={
-                        compania.id
-                      }
-                    >
-                      {
-                        compania.nombre
-                      }
-                    </option>
-                  )
-                )}
+                {activeCompanies.map((compania) => (
+                  <option key={compania.id} value={compania.id}>
+                    {compania.nombre}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -367,11 +299,7 @@ export function ConfiguracionAdmin() {
               <Input
                 value={numero}
                 onChange={(event) => {
-                  const value =
-                    event.target.value.replace(
-                      /\D/g,
-                      ""
-                    );
+                  const value = event.target.value.replace(/\D/g, "");
 
                   setNumero(value);
                 }}
@@ -383,31 +311,22 @@ export function ConfiguracionAdmin() {
 
             <Button
               className="self-end bg-amber-500 text-slate-950 hover:bg-amber-600"
-              disabled={
-                loading ||
-                !companiaId ||
-                !numero.trim()
-              }
+              disabled={loading || !companiaId || !numero.trim()}
               onClick={async () => {
                 setLoading(true);
                 setError(null);
 
                 try {
-                  await createOrReactivateRuta(
-                    companiaId,
-                    Number(numero)
-                  );
+                  await createOrReactivateRuta(companiaId, Number(numero));
 
                   setNumero("");
 
-                  await refreshRoutes(
-                    companiaId
-                  );
+                  await refreshRoutes(companiaId);
                 } catch (cause) {
                   setError(
                     cause instanceof Error
                       ? cause.message
-                      : "No se pudo crear o reactivar la ruta."
+                      : "No se pudo crear o reactivar la ruta.",
                   );
                 } finally {
                   setLoading(false);
@@ -420,8 +339,7 @@ export function ConfiguracionAdmin() {
 
           {!companiaId ? (
             <div className="mt-4 rounded-xl border border-dashed border-white/8 bg-white/[0.015] px-3 py-6 text-center text-[11px] text-slate-600">
-              Seleccione una compañía
-              para ver sus rutas.
+              Seleccione una compañía para ver sus rutas.
             </div>
           ) : routesLoading ? (
             <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-600">
@@ -429,8 +347,7 @@ export function ConfiguracionAdmin() {
             </div>
           ) : rutas.length === 0 ? (
             <div className="mt-4 rounded-xl border border-white/7 bg-white/[0.02] px-3 py-6 text-center text-[11px] text-slate-600">
-              Esta compañía no tiene
-              rutas activas.
+              Esta compañía no tiene rutas activas.
             </div>
           ) : (
             <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -439,9 +356,7 @@ export function ConfiguracionAdmin() {
                   key={ruta.id}
                   className="flex items-center justify-between gap-1 rounded-lg border border-white/7 bg-white/[0.025] p-2 text-xs font-medium text-amber-300"
                 >
-                  <span>
-                    {ruta.numero}
-                  </span>
+                  <span>{ruta.numero}</span>
 
                   <button
                     type="button"
@@ -468,8 +383,7 @@ export function ConfiguracionAdmin() {
       <AppDialog
         open={deleteTarget !== null}
         title={
-          deleteTarget?.kind ===
-          "COMPANIA"
+          deleteTarget?.kind === "COMPANIA"
             ? "Eliminar compañía"
             : "Eliminar ruta"
         }
@@ -482,9 +396,7 @@ export function ConfiguracionAdmin() {
         confirmLabel="Eliminar"
         loading={loading}
         onConfirm={executeDelete}
-        onClose={() =>
-          setDeleteTarget(null)
-        }
+        onClose={() => setDeleteTarget(null)}
       />
     </>
   );

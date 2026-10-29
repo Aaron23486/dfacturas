@@ -74,9 +74,7 @@ export function AppShell({
             <p className="text-[11px] font-medium text-slate-300">
               {profile.email}
             </p>
-            <p className="text-[10px] text-amber-400/70">
-              {profile.role}
-            </p>
+            <p className="text-[10px] text-amber-400/70">{profile.role}</p>
           </div>
 
           <form action={logout}>
@@ -92,9 +90,7 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-[1900px] p-4">
-        {children}
-      </main>
+      <main className="relative mx-auto max-w-[1900px] p-4">{children}</main>
     </div>
   );
 }

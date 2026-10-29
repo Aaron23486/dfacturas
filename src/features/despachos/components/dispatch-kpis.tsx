@@ -1,18 +1,8 @@
-import {
-  Clock3,
-  Medal,
-  PackageCheck,
-  PackageOpen,
-  Timer,
-} from "lucide-react";
+import { Clock3, Medal, PackageCheck, PackageOpen, Timer } from "lucide-react";
 import { formatToday } from "@/lib/utils/date";
 import type { DailyKpis } from "@/types/dispatch";
 
-export function DispatchKpis({
-  data,
-}: {
-  data: DailyKpis;
-}) {
+export function DispatchKpis({ data }: { data: DailyKpis }) {
   const metrics = [
     {
       label: "Despachadas",
@@ -51,9 +41,7 @@ export function DispatchKpis({
             <p className="text-[10px] uppercase tracking-[0.08em] text-slate-500">
               {label}
             </p>
-            <p className="text-base font-semibold text-slate-100">
-              {value}
-            </p>
+            <p className="text-base font-semibold text-slate-100">{value}</p>
           </div>
         </div>
       ))}
@@ -68,9 +56,7 @@ export function DispatchKpis({
             <p className="text-[10px] uppercase tracking-[0.08em] text-slate-500">
               Top del día
             </p>
-            <span className="text-[10px] text-slate-600">
-              {formatToday()}
-            </span>
+            <span className="text-[10px] text-slate-600">{formatToday()}</span>
           </div>
 
           <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-slate-300">

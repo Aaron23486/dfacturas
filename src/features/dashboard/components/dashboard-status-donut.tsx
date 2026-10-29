@@ -1,13 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import type { DashboardDatum } from "../domain/dashboard.types";
 import { DashboardTooltip } from "./dashboard-tooltip";
@@ -24,14 +18,10 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
-function DashboardStatusDonutComponent({
-  data,
-  selectedId,
-  onSelect,
-}: Props) {
+function DashboardStatusDonutComponent({ data, selectedId, onSelect }: Props) {
   const total = useMemo(
     () => data.reduce((sum, item) => sum + item.value, 0),
-    [data]
+    [data],
   );
 
   return (
@@ -71,8 +61,7 @@ function DashboardStatusDonutComponent({
               }}
             >
               {data.map((item) => {
-                const dimmed =
-                  selectedId !== null && selectedId !== item.id;
+                const dimmed = selectedId !== null && selectedId !== item.id;
 
                 return (
                   <Cell
@@ -135,14 +124,11 @@ function DashboardStatusDonutComponent({
             <span
               className="size-2 rounded-full"
               style={{
-                backgroundColor:
-                  STATUS_COLORS[item.id] ?? "#F59E0B",
+                backgroundColor: STATUS_COLORS[item.id] ?? "#F59E0B",
               }}
             />
             {item.label}
-            <span className="font-semibold text-slate-300">
-              {item.value}
-            </span>
+            <span className="font-semibold text-slate-300">{item.value}</span>
           </button>
         ))}
       </div>
@@ -150,6 +136,4 @@ function DashboardStatusDonutComponent({
   );
 }
 
-export const DashboardStatusDonut = memo(
-  DashboardStatusDonutComponent
-);
+export const DashboardStatusDonut = memo(DashboardStatusDonutComponent);

@@ -1,4 +1,4 @@
-﻿export const DISPATCH_STATUSES = [
+export const DISPATCH_STATUSES = [
   "ATENDIENDO",
   "DESPACHADA",
   "PEDIDO_CANCELADO",

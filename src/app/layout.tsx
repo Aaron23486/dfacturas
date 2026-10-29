@@ -15,8 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "DFacturas | Control de despachos",
-  description:
-    "Sistema seguro de gestión y control logístico de despachos.",
+  description: "Sistema seguro de gestión y control logístico de despachos.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

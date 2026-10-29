@@ -37,11 +37,11 @@ function clampPoint(point: Point): Point {
   return {
     x: Math.min(
       Math.max(EDGE, point.x),
-      window.innerWidth - BUTTON_SIZE - EDGE
+      window.innerWidth - BUTTON_SIZE - EDGE,
     ),
     y: Math.min(
       Math.max(HEADER_GUARD, point.y),
-      window.innerHeight - BUTTON_SIZE - EDGE
+      window.innerHeight - BUTTON_SIZE - EDGE,
     ),
   };
 }
@@ -57,11 +57,7 @@ function defaultPoint(): Point {
   });
 }
 
-function FloatingMetricsComponent({
-  data,
-}: {
-  data: DailyKpis;
-}) {
+function FloatingMetricsComponent({ data }: { data: DailyKpis }) {
   const [position, setPosition] = useState<Point>({
     x: 0,
     y: 120,
@@ -80,11 +76,9 @@ function FloatingMetricsComponent({
         const parsed = saved ? (JSON.parse(saved) as Point) : null;
 
         setPosition(
-          parsed &&
-            Number.isFinite(parsed.x) &&
-            Number.isFinite(parsed.y)
+          parsed && Number.isFinite(parsed.x) && Number.isFinite(parsed.y)
             ? clampPoint(parsed)
-            : defaultPoint()
+            : defaultPoint(),
         );
       } catch {
         setPosition(defaultPoint());
@@ -140,10 +134,7 @@ function FloatingMetricsComponent({
     const dx = event.clientX - pointerStart.current.x;
     const dy = event.clientY - pointerStart.current.y;
 
-    if (
-      Math.abs(dx) > DRAG_THRESHOLD ||
-      Math.abs(dy) > DRAG_THRESHOLD
-    ) {
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
       dragging.current = true;
     }
 
@@ -155,7 +146,7 @@ function FloatingMetricsComponent({
       clampPoint({
         x: positionStart.current.x + dx,
         y: positionStart.current.y + dy,
-      })
+      }),
     );
   }
 
@@ -197,12 +188,12 @@ function FloatingMetricsComponent({
 
   const panelX = Math.min(
     Math.max(EDGE, rawPanelX),
-    window.innerWidth - panelWidth - EDGE
+    window.innerWidth - panelWidth - EDGE,
   );
 
   const panelY = Math.min(
     Math.max(HEADER_GUARD, rawPanelY),
-    window.innerHeight - panelHeight - EDGE
+    window.innerHeight - panelHeight - EDGE,
   );
 
   return (
@@ -220,9 +211,7 @@ function FloatingMetricsComponent({
               <p className="text-xs font-semibold text-slate-100">
                 Métricas del día
               </p>
-              <p className="text-[10px] text-slate-600">
-                {formatToday()}
-              </p>
+              <p className="text-[10px] text-slate-600">{formatToday()}</p>
             </div>
 
             <button
@@ -314,20 +303,12 @@ function Metric({
       <p className="text-[9px] uppercase tracking-[0.06em] text-slate-600">
         {label}
       </p>
-      <p className="mt-0.5 text-sm font-semibold text-slate-100">
-        {value}
-      </p>
+      <p className="mt-0.5 text-sm font-semibold text-slate-100">{value}</p>
     </div>
   );
 }
 
-function Ranking({
-  number,
-  name,
-}: {
-  number: number;
-  name: string;
-}) {
+function Ranking({ number, name }: { number: number; name: string }) {
   return (
     <div className="flex items-center gap-2">
       <span

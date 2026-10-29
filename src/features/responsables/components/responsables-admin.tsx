@@ -12,11 +12,7 @@ import type { Responsable } from "@/types/catalog";
 
 import { ResponsableModal } from "./responsable-modal";
 
-export function ResponsablesAdmin({
-  role,
-}: {
-  role: UserRole;
-}) {
+export function ResponsablesAdmin({ role }: { role: UserRole }) {
   const isAdmin = role === "ADMIN";
 
   const [rows, setRows] = useState<Responsable[]>([]);
@@ -248,7 +244,9 @@ export function ResponsablesAdmin({
       <AppDialog
         open={Boolean(toggleRow) && isAdmin}
         tone="warning"
-        title={toggleRow?.activo ? "Desactivar responsable" : "Activar responsable"}
+        title={
+          toggleRow?.activo ? "Desactivar responsable" : "Activar responsable"
+        }
         description={toggleRow?.nombre_completo}
         confirmLabel={toggleRow?.activo ? "Desactivar" : "Activar"}
         loading={loading}

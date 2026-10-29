@@ -19,9 +19,7 @@ interface Props {
   }>;
 }
 
-export default async function LoginPage({
-  searchParams,
-}: Props) {
+export default async function LoginPage({ searchParams }: Props) {
   const supabase = await createClient();
 
   const {
@@ -47,7 +45,9 @@ export default async function LoginPage({
     profile: "La cuenta no tiene un perfil autorizado.",
     inactive: "La cuenta está desactivada.",
   };
-  const errorMessage = params.error ? errorMessages[params.error] ?? null : null;
+  const errorMessage = params.error
+    ? (errorMessages[params.error] ?? null)
+    : null;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07111F] p-6 text-slate-100">
@@ -75,10 +75,7 @@ export default async function LoginPage({
         <CardContent>
           <form action={login} className="space-y-4">
             <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs text-slate-300"
-              >
+              <Label htmlFor="email" className="text-xs text-slate-300">
                 Correo
               </Label>
 
@@ -93,10 +90,7 @@ export default async function LoginPage({
             </div>
 
             <div className="space-y-1.5">
-              <Label
-                htmlFor="password"
-                className="text-xs text-slate-300"
-              >
+              <Label htmlFor="password" className="text-xs text-slate-300">
                 Contraseña
               </Label>
 

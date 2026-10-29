@@ -1,4 +1,5 @@
 # DFacturas
+
 <!-- portfolio-badges-start -->
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.8-black?logo=nextdotjs)
@@ -42,6 +43,7 @@ Los usuarios administrativos gestionan compañías y sus rutas asociadas desde u
 ![Configuración de compañías y rutas en DFacturas](docs/images/dfacturas-configuration.png)
 
 <!-- product-preview-end -->
+
 ## Funcionalidad principal
 
 - Facturas de 20 dígitos.
@@ -59,16 +61,16 @@ Los usuarios administrativos gestionan compañías y sus rutas asociadas desde u
 
 ## Stack
 
-| Capa | Tecnología |
-| --- | --- |
-| Framework | Next.js 16.3.8 (App Router) |
-| UI | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts |
-| Lenguaje | TypeScript 5.9 |
-| Validación | Zod 4 |
-| Auth / Datos | Supabase Auth + PostgreSQL |
-| Seguridad BD | RLS, grants, RPC, constraints y triggers |
-| Testing | Vitest 5 |
-| Deploy | Opcional; compatible con Vercel y Supabase |
+| Capa         | Tecnología                                              |
+| ------------ | ------------------------------------------------------- |
+| Framework    | Next.js 16.3.8 (App Router)                             |
+| UI           | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts |
+| Lenguaje     | TypeScript 5.9                                          |
+| Validación   | Zod 4                                                   |
+| Auth / Datos | Supabase Auth + PostgreSQL                              |
+| Seguridad BD | RLS, grants, RPC, constraints y triggers                |
+| Testing      | Vitest 5                                                |
+| Deploy       | Opcional; compatible con Vercel y Supabase              |
 
 ## Módulos
 
@@ -240,10 +242,10 @@ Reemplace el correo de ejemplo por el usuario creado en su propio proyecto Supab
 
 ### Roles
 
-| Rol | Acceso |
-| --- | --- |
-| `OPERATIVO` | Operaciones de despacho autorizadas |
-| `ADMIN` | Operaciones más dashboard, catálogos, configuración, auditoría y funciones administrativas |
+| Rol         | Acceso                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| `OPERATIVO` | Operaciones de despacho autorizadas                                                        |
+| `ADMIN`     | Operaciones más dashboard, catálogos, configuración, auditoría y funciones administrativas |
 
 ### Política de credenciales
 

@@ -22,8 +22,7 @@ export const cancelDispatchSchema = z.object({
   vehiculoId: z.string().uuid().nullable().optional(),
 });
 
-export const editDispatchSchema =
-  createDispatchSchema.omit({
-    factura: true,
-  });
+export const editDispatchSchema = createDispatchSchema.omit({
+  factura: true,
+});
 export const scanFacturaSchema = z.object({ factura });

@@ -8,19 +8,12 @@ const labels: Record<DispatchStatus, string> = {
 };
 
 const classes: Record<DispatchStatus, string> = {
-  ATENDIENDO:
-    "border-amber-400/25 bg-amber-400/10 text-amber-300",
-  DESPACHADA:
-    "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
-  PEDIDO_CANCELADO:
-    "border-red-400/25 bg-red-400/10 text-red-300",
+  ATENDIENDO: "border-amber-400/25 bg-amber-400/10 text-amber-300",
+  DESPACHADA: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+  PEDIDO_CANCELADO: "border-red-400/25 bg-red-400/10 text-red-300",
 };
 
-export function StatusBadge({
-  status,
-}: {
-  status: DispatchStatus;
-}) {
+export function StatusBadge({ status }: { status: DispatchStatus }) {
   return (
     <Badge
       variant="outline"

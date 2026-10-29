@@ -1,7 +1,4 @@
-export type DispatchStatus =
-  | "ATENDIENDO"
-  | "DESPACHADA"
-  | "PEDIDO_CANCELADO";
+export type DispatchStatus = "ATENDIENDO" | "DESPACHADA" | "PEDIDO_CANCELADO";
 
 export interface DispatchRecord {
   id: string;
@@ -24,8 +21,7 @@ export interface DispatchRecord {
   deleted_at: string | null;
 }
 
-export interface DispatchListItem
-  extends DispatchRecord {
+export interface DispatchListItem extends DispatchRecord {
   compania_nombre: string | null;
   ruta_numero: number | null;
   transportista_nombre: string | null;

@@ -21,13 +21,9 @@ function xmlEscape(value: unknown) {
 
 function excelSafeText(value: unknown) {
   const text =
-    value === null || value === undefined || value === ""
-      ? "-"
-      : String(value);
+    value === null || value === undefined || value === "" ? "-" : String(value);
 
-  return /^[=+@]/.test(text) || /^-[^0-9]/.test(text)
-    ? `'${text}`
-    : text;
+  return /^[=+@]/.test(text) || /^-[^0-9]/.test(text) ? `'${text}` : text;
 }
 
 function colName(index: number) {
@@ -45,7 +41,7 @@ function colName(index: number) {
 
 function inlineStringCell(ref: string, value: unknown, style = 0) {
   return `<c r="${ref}" t="inlineStr"${style ? ` s="${style}"` : ""}><is><t xml:space="preserve">${xmlEscape(
-    excelSafeText(value)
+    excelSafeText(value),
   )}</t></is></c>`;
 }
 
@@ -165,7 +161,7 @@ function makeZip(files: Array<{ name: string; content: string }>) {
 function findLabel(
   items: Array<{ id: string; label: string }>,
   id: string | null,
-  fallback: string
+  fallback: string,
 ) {
   if (!id) {
     return fallback;
@@ -195,7 +191,7 @@ function buildDispatchSheet(rows: DashboardExportRow[]) {
   const cols = widths
     .map(
       (width, index) =>
-        `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
+        `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`,
     )
     .join("");
 
@@ -273,19 +269,19 @@ function buildSummarySheet(input: {
   const company = findLabel(
     input.analytics.companias,
     input.filters.companiaId,
-    "Todas"
+    "Todas",
   );
 
   const responsible = findLabel(
     input.analytics.responsables,
     input.filters.responsableId,
-    "Todos"
+    "Todos",
   );
 
   const route = findLabel(input.analytics.rutas, input.filters.rutaId, "Todas");
 
   const status = input.filters.estado
-    ? STATUS_LABELS[input.filters.estado] ?? input.filters.estado
+    ? (STATUS_LABELS[input.filters.estado] ?? input.filters.estado)
     : "Todos";
 
   const generated = new Intl.DateTimeFormat("es-CR", {
@@ -315,7 +311,7 @@ function buildSummarySheet(input: {
       const r = index + 3;
       return `<row r="${r}">${inlineStringCell(`A${r}`, label, 5)}${inlineStringCell(
         `B${r}`,
-        value
+        value,
       )}</row>`;
     })
     .join("");
@@ -330,7 +326,7 @@ function buildSummarySheet(input: {
     <row r="1" ht="30" customHeight="1">${inlineStringCell(
       "A1",
       "FACTURACIÓN V2 — REPORTE DE DESPACHOS",
-      6
+      6,
     )}</row>
     ${rows}
   </sheetData>

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 import {
   Building2,
@@ -21,11 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { listRutasByCompania } from "@/services/catalog.service";
 import { registerCancelledDispatch } from "@/services/dispatch.service";
-import type {
-  Compania,
-  Responsable,
-  Ruta,
-} from "@/types/catalog";
+import type { Compania, Responsable, Ruta } from "@/types/catalog";
 
 const FACTURA_LENGTH = 20;
 const FACTURA_PATTERN = /^\d{20}$/;
@@ -34,9 +25,7 @@ const selectClass =
   "h-12 w-full rounded-xl border border-white/10 bg-[#07111F]/90 px-4 text-base text-slate-100 outline-none transition focus:border-red-400/45 focus:ring-2 focus:ring-red-400/10";
 
 function normalizeFactura(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, FACTURA_LENGTH);
+  return value.replace(/\D/g, "").slice(0, FACTURA_LENGTH);
 }
 
 function isValidFactura(value: string) {
@@ -78,11 +67,9 @@ function CancelOrderDialogContent({
 
   const [factura, setFactura] = useState("");
   const [responsableId, setResponsableId] = useState(
-    initialResponsableId ?? ""
+    initialResponsableId ?? "",
   );
-  const [companiaId, setCompaniaId] = useState(
-    initialCompaniaId ?? ""
-  );
+  const [companiaId, setCompaniaId] = useState(initialCompaniaId ?? "");
   const [rutaId, setRutaId] = useState(initialRutaId ?? "");
   const [detalle, setDetalle] = useState("");
   const [rutas, setRutas] = useState<Ruta[]>([]);
@@ -105,9 +92,7 @@ function CancelOrderDialogContent({
 
         setRutas(data);
         setRutaId((current) =>
-          current && data.some((route) => route.id === current)
-            ? current
-            : ""
+          current && data.some((route) => route.id === current) ? current : "",
         );
       })
       .catch(() => {
@@ -118,7 +103,7 @@ function CancelOrderDialogContent({
         setRutas([]);
         setRutaId("");
         setErrorMessage(
-          "No se pudieron cargar las rutas. Seleccione nuevamente la compañía."
+          "No se pudieron cargar las rutas. Seleccione nuevamente la compañía.",
         );
       });
 
@@ -168,7 +153,7 @@ function CancelOrderDialogContent({
 
     if (!isValidFactura(factura)) {
       setErrorMessage(
-        "La factura debe contener exactamente 20 números, sin letras, espacios ni símbolos."
+        "La factura debe contener exactamente 20 números, sin letras, espacios ni símbolos.",
       );
       focusCancellationScanner();
       return false;
@@ -198,7 +183,7 @@ function CancelOrderDialogContent({
           transportistaId: null,
           vehiculoId: null,
         },
-        userId
+        userId,
       );
 
       await onSuccess();
@@ -207,7 +192,7 @@ function CancelOrderDialogContent({
       setErrorMessage(
         cause instanceof Error
           ? cause.message
-          : "Ocurrió un error al cancelar el pedido."
+          : "Ocurrió un error al cancelar el pedido.",
       );
       focusCancellationScanner();
     } finally {
@@ -231,11 +216,7 @@ function CancelOrderDialogContent({
         }
       }}
     >
-      <form
-        className="space-y-5"
-        onSubmit={submitCancellation}
-        noValidate
-      >
+      <form className="space-y-5" onSubmit={submitCancellation} noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
@@ -361,7 +342,8 @@ function CancelOrderDialogContent({
           />
 
           <p className="text-xs leading-5 text-slate-400">
-            El Enter enviado por el lector registra esta cancelación; no ejecuta el primer ni el segundo escaneo del flujo normal.
+            El Enter enviado por el lector registra esta cancelación; no ejecuta
+            el primer ni el segundo escaneo del flujo normal.
           </p>
         </div>
 

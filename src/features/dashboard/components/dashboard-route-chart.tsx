@@ -21,19 +21,15 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
-function DashboardRouteChartComponent({
-  data,
-  selectedId,
-  onSelect,
-}: Props) {
+function DashboardRouteChartComponent({ data, selectedId, onSelect }: Props) {
   const visibleData = useMemo(
     () => [...data].sort((a, b) => b.value - a.value).slice(0, 10),
-    [data]
+    [data],
   );
 
   const total = useMemo(
     () => visibleData.reduce((sum, item) => sum + item.value, 0),
-    [visibleData]
+    [visibleData],
   );
 
   return (
@@ -42,9 +38,7 @@ function DashboardRouteChartComponent({
       className="rounded-2xl border border-white/8 bg-[#0B1626]/72 p-3 shadow-[0_16px_50px_rgba(0,0,0,.20)] backdrop-blur-xl"
     >
       <div className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-100">
-          Por ruta
-        </h2>
+        <h2 className="text-sm font-semibold text-slate-100">Por ruta</h2>
         <p className="text-[10px] text-slate-600">
           Top 10 rutas por volumen de despacho
         </p>
@@ -56,10 +50,7 @@ function DashboardRouteChartComponent({
             data={visibleData}
             margin={{ top: 12, right: 12, left: -18, bottom: 8 }}
           >
-            <CartesianGrid
-              vertical={false}
-              stroke="rgba(255,255,255,.045)"
-            />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,.045)" />
             <XAxis
               dataKey="label"
               tick={{
@@ -102,16 +93,8 @@ function DashboardRouteChartComponent({
               {visibleData.map((item) => (
                 <Cell
                   key={item.id}
-                  fill={
-                    selectedId === item.id
-                      ? "#FBBF24"
-                      : "#D97706"
-                  }
-                  opacity={
-                    selectedId && selectedId !== item.id
-                      ? 0.22
-                      : 0.9
-                  }
+                  fill={selectedId === item.id ? "#FBBF24" : "#D97706"}
+                  opacity={selectedId && selectedId !== item.id ? 0.22 : 0.9}
                   className="cursor-pointer"
                 />
               ))}
@@ -123,6 +106,4 @@ function DashboardRouteChartComponent({
   );
 }
 
-export const DashboardRouteChart = memo(
-  DashboardRouteChartComponent
-);
+export const DashboardRouteChart = memo(DashboardRouteChartComponent);

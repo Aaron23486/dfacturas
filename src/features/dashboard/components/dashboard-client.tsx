@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Download } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -105,7 +99,7 @@ function formatMinutes(value: number) {
 async function fetchDashboardAnalytics(
   from: string,
   to: string,
-  filters: DashboardCrossFilters
+  filters: DashboardCrossFilters,
 ): Promise<DashboardAnalytics> {
   const { data, error } = await createClient().rpc(
     "admin_dashboard_analytics",
@@ -116,12 +110,12 @@ async function fetchDashboardAnalytics(
       p_responsable_id: filters.responsableId,
       p_ruta_id: filters.rutaId,
       p_estado: filters.estado,
-    }
+    },
   );
 
   if (error) {
     throw new Error(
-      safeErrorMessage(error, "No se pudo cargar la analítica del dashboard.")
+      safeErrorMessage(error, "No se pudo cargar la analítica del dashboard."),
     );
   }
 
@@ -131,7 +125,7 @@ async function fetchDashboardAnalytics(
 async function fetchExportRows(
   from: string,
   to: string,
-  filters: DashboardCrossFilters
+  filters: DashboardCrossFilters,
 ): Promise<DashboardExportRow[]> {
   const { data, error } = await createClient().rpc(
     "admin_dashboard_export_rows",
@@ -142,12 +136,12 @@ async function fetchExportRows(
       p_responsable_id: filters.responsableId,
       p_ruta_id: filters.rutaId,
       p_estado: filters.estado,
-    }
+    },
   );
 
   if (error) {
     throw new Error(
-      safeErrorMessage(error, "No se pudo preparar la exportación.")
+      safeErrorMessage(error, "No se pudo preparar la exportación."),
     );
   }
 
@@ -166,7 +160,7 @@ export function DashboardClient() {
   const rangeBeforeMonthRef = useRef<StoredRange | null>(null);
 
   const [filters, setFilters] = useState<DashboardCrossFilters>(
-    EMPTY_DASHBOARD_FILTERS
+    EMPTY_DASHBOARD_FILTERS,
   );
   const [analytics, setAnalytics] =
     useState<DashboardAnalytics>(EMPTY_ANALYTICS);
@@ -195,7 +189,7 @@ export function DashboardClient() {
             setError(
               cause instanceof Error
                 ? cause.message
-                : "No se pudo cargar el dashboard."
+                : "No se pudo cargar el dashboard.",
             );
           }
         })
@@ -219,7 +213,7 @@ export function DashboardClient() {
       ["Máximo", formatMinutes(analytics.metrics.maximoMinutos)],
       ["Ruta top", analytics.metrics.rutaTop || "-"],
     ],
-    [analytics.metrics]
+    [analytics.metrics],
   );
 
   const clearMonthSelection = useCallback(() => {
@@ -239,7 +233,7 @@ export function DashboardClient() {
       setAppliedTo(nextRange.to);
       setError(null);
     },
-    [clearMonthSelection]
+    [clearMonthSelection],
   );
 
   const applyCustomRange = useCallback(() => {
@@ -296,7 +290,7 @@ export function DashboardClient() {
       setAppliedTo(monthRange.to);
       setError(null);
     },
-    [appliedFrom, appliedTo, mode, selectedMonthId]
+    [appliedFrom, appliedTo, mode, selectedMonthId],
   );
 
   const toggleCompania = useCallback(
@@ -305,7 +299,7 @@ export function DashboardClient() {
         ...current,
         companiaId: current.companiaId === id ? null : id,
       })),
-    []
+    [],
   );
 
   const toggleResponsable = useCallback(
@@ -314,7 +308,7 @@ export function DashboardClient() {
         ...current,
         responsableId: current.responsableId === id ? null : id,
       })),
-    []
+    [],
   );
 
   const toggleRuta = useCallback(
@@ -323,7 +317,7 @@ export function DashboardClient() {
         ...current,
         rutaId: current.rutaId === id ? null : id,
       })),
-    []
+    [],
   );
 
   const toggleEstado = useCallback((id: string) => {
@@ -348,16 +342,14 @@ export function DashboardClient() {
       }
 
       if (
-        target.closest(
-          '[data-dashboard-interactive="true"], button, input, a'
-        )
+        target.closest('[data-dashboard-interactive="true"], button, input, a')
       ) {
         return;
       }
 
       clearCrossFilters();
     },
-    [clearCrossFilters]
+    [clearCrossFilters],
   );
 
   const exportCurrent = useCallback(async () => {
@@ -378,7 +370,7 @@ export function DashboardClient() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "No se pudo exportar la información."
+          : "No se pudo exportar la información.",
       );
     } finally {
       setExporting(false);
@@ -552,9 +544,7 @@ export function DashboardClient() {
           onSelectMonth={selectMonth}
         />
 
-        <DashboardRouteTimeChart
-  data={analytics.promedioRuta}
-/>
+        <DashboardRouteTimeChart data={analytics.promedioRuta} />
       </div>
     </div>
   );

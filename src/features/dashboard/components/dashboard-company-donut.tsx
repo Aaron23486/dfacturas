@@ -1,13 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import type { DashboardDatum } from "../domain/dashboard.types";
 import { DashboardTooltip } from "./dashboard-tooltip";
@@ -27,14 +21,10 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
-function DashboardCompanyDonutComponent({
-  data,
-  selectedId,
-  onSelect,
-}: Props) {
+function DashboardCompanyDonutComponent({ data, selectedId, onSelect }: Props) {
   const total = useMemo(
     () => data.reduce((sum, item) => sum + item.value, 0),
-    [data]
+    [data],
   );
 
   return (
@@ -43,9 +33,7 @@ function DashboardCompanyDonutComponent({
       className="rounded-2xl border border-white/8 bg-[#0B1626]/72 p-3 shadow-[0_16px_50px_rgba(0,0,0,.20)] backdrop-blur-xl"
     >
       <div className="mb-2">
-        <h2 className="text-sm font-semibold text-slate-100">
-          Por compañía
-        </h2>
+        <h2 className="text-sm font-semibold text-slate-100">Por compañía</h2>
         <p className="text-[10px] text-slate-600">
           Distribución del volumen por compañía
         </p>
@@ -73,8 +61,7 @@ function DashboardCompanyDonutComponent({
               }}
             >
               {data.map((item, index) => {
-                const dimmed =
-                  selectedId !== null && selectedId !== item.id;
+                const dimmed = selectedId !== null && selectedId !== item.id;
 
                 return (
                   <Cell
@@ -141,9 +128,7 @@ function DashboardCompanyDonutComponent({
               }}
             />
             {item.label}
-            <span className="font-semibold text-slate-300">
-              {item.value}
-            </span>
+            <span className="font-semibold text-slate-300">{item.value}</span>
           </button>
         ))}
       </div>
@@ -151,6 +136,4 @@ function DashboardCompanyDonutComponent({
   );
 }
 
-export const DashboardCompanyDonut = memo(
-  DashboardCompanyDonutComponent
-);
+export const DashboardCompanyDonut = memo(DashboardCompanyDonutComponent);

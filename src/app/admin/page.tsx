@@ -23,11 +23,11 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <Link
-  href="/app"
-  className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
->
-  Volver al área operativa
-</Link>
+              href="/app"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              Volver al área operativa
+            </Link>
           </CardContent>
         </Card>
       </div>

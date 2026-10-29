@@ -1,4 +1,4 @@
-﻿import { INVOICE_LENGTH } from "./dispatch.constants";
+import { INVOICE_LENGTH } from "./dispatch.constants";
 
 export type InvoiceValidationResult =
   | {

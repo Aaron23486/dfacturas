@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   Building2,
@@ -16,17 +11,11 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
-import {
-  Label,
-} from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
 
-import {
-  Textarea,
-} from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   listCompaniasActivas,
@@ -35,9 +24,7 @@ import {
   listTransportistasActivos,
 } from "@/services/catalog.service";
 
-import {
-  getVehicleByTransportista,
-} from "@/services/vehicle.service";
+import { getVehicleByTransportista } from "@/services/vehicle.service";
 
 import {
   correctDispatch,
@@ -52,21 +39,12 @@ import type {
   Vehiculo,
 } from "@/types/catalog";
 
-import type {
-  DispatchListItem,
-} from "@/types/dispatch";
+import type { DispatchListItem } from "@/types/dispatch";
 
-import type {
-  UserRole,
-} from "@/types/auth";
+import type { UserRole } from "@/types/auth";
 
-function isClienteRetiraNombre(
-  value: string | null | undefined
-) {
-  return (
-    value?.trim().toUpperCase() ===
-    "CLIENTE RETIRA"
-  );
+function isClienteRetiraNombre(value: string | null | undefined) {
+  return value?.trim().toUpperCase() === "CLIENTE RETIRA";
 }
 
 export function EditDispatchModal({
@@ -80,113 +58,48 @@ export function EditDispatchModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const [
-    responsables,
-    setResponsables,
-  ] = useState<
-    Responsable[]
-  >([]);
+  const [responsables, setResponsables] = useState<Responsable[]>([]);
 
-  const [
-    companias,
-    setCompanias,
-  ] = useState<
-    Compania[]
-  >([]);
+  const [companias, setCompanias] = useState<Compania[]>([]);
 
-  const [
-    rutas,
-    setRutas,
-  ] = useState<
-    Ruta[]
-  >([]);
+  const [rutas, setRutas] = useState<Ruta[]>([]);
 
-  const [
-    transportistas,
-    setTransportistas,
-  ] = useState<
-    Transportista[]
-  >([]);
+  const [transportistas, setTransportistas] = useState<Transportista[]>([]);
 
-  const [
-    responsableId,
-    setResponsableId,
-  ] = useState("");
+  const [responsableId, setResponsableId] = useState("");
 
-  const [
-    companiaId,
-    setCompaniaId,
-  ] = useState("");
+  const [companiaId, setCompaniaId] = useState("");
 
-  const [
-    rutaId,
-    setRutaId,
-  ] = useState("");
+  const [rutaId, setRutaId] = useState("");
 
-  const [
-    transportistaId,
-    setTransportistaId,
-  ] = useState("");
+  const [transportistaId, setTransportistaId] = useState("");
 
-  const [
-    vehicle,
-    setVehicle,
-  ] = useState<
-    Vehiculo | null
-  >(null);
+  const [vehicle, setVehicle] = useState<Vehiculo | null>(null);
 
-  const [
-    detalle,
-    setDetalle,
-  ] = useState("");
+  const [detalle, setDetalle] = useState("");
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    error,
-    setError,
-  ] = useState<
-    string | null
-  >(null);
+  const [error, setError] = useState<string | null>(null);
 
   const operationalDispatched =
-    role === "OPERATIVO" &&
-    row?.estado ===
-      "DESPACHADA";
+    role === "OPERATIVO" && row?.estado === "DESPACHADA";
 
-  const admin =
-    role === "ADMIN";
+  const admin = role === "ADMIN";
 
-  const canEditContext =
-    admin ||
-    row?.estado ===
-      "ATENDIENDO";
+  const canEditContext = admin || row?.estado === "ATENDIENDO";
 
-  const selectedTransportista =
-    useMemo(
-      () =>
-        transportistas.find(
-          (item) =>
-            item.id ===
-            transportistaId
-        ) ?? null,
-      [
-        transportistas,
-        transportistaId,
-      ]
-    );
+  const selectedTransportista = useMemo(
+    () => transportistas.find((item) => item.id === transportistaId) ?? null,
+    [transportistas, transportistaId],
+  );
 
-  const clienteRetiraSeleccionado =
-    isClienteRetiraNombre(
-      selectedTransportista?.nombre ??
-        (transportistaId ===
-        row?.transportista_id
-          ? row?.transportista_nombre
-          : null)
-    );
+  const clienteRetiraSeleccionado = isClienteRetiraNombre(
+    selectedTransportista?.nombre ??
+      (transportistaId === row?.transportista_id
+        ? row?.transportista_nombre
+        : null),
+  );
 
   useEffect(() => {
     if (!row) {
@@ -194,25 +107,15 @@ export function EditDispatchModal({
     }
 
     const timer = window.setTimeout(() => {
-      setResponsableId(
-        row.responsable_id ?? ""
-      );
+      setResponsableId(row.responsable_id ?? "");
 
-      setCompaniaId(
-        row.compania_id ?? ""
-      );
+      setCompaniaId(row.compania_id ?? "");
 
-      setRutaId(
-        row.ruta_id ?? ""
-      );
+      setRutaId(row.ruta_id ?? "");
 
-      setTransportistaId(
-        row.transportista_id ?? ""
-      );
+      setTransportistaId(row.transportista_id ?? "");
 
-      setDetalle(
-        row.detalle ?? ""
-      );
+      setDetalle(row.detalle ?? "");
 
       setError(null);
     }, 0);
@@ -222,29 +125,15 @@ export function EditDispatchModal({
       listCompaniasActivas(),
       listTransportistasActivos(),
     ])
-      .then(
-        ([
-          responsablesData,
-          companiasData,
-          transportistasData,
-        ]) => {
-          setResponsables(
-            responsablesData
-          );
+      .then(([responsablesData, companiasData, transportistasData]) => {
+        setResponsables(responsablesData);
 
-          setCompanias(
-            companiasData
-          );
+        setCompanias(companiasData);
 
-          setTransportistas(
-            transportistasData
-          );
-        }
-      )
+        setTransportistas(transportistasData);
+      })
       .catch(() => {
-        setError(
-          "No se pudieron cargar los catálogos para la corrección."
-        );
+        setError("No se pudieron cargar los catálogos para la corrección.");
       });
 
     return () => window.clearTimeout(timer);
@@ -259,22 +148,17 @@ export function EditDispatchModal({
       return () => window.clearTimeout(timer);
     }
 
-    void listRutasByCompania(
-      companiaId
-    )
+    void listRutasByCompania(companiaId)
       .then(setRutas)
       .catch(() => {
         setError(
-          "No se pudieron cargar las rutas de la compañía seleccionada."
+          "No se pudieron cargar las rutas de la compañía seleccionada.",
         );
       });
   }, [companiaId]);
 
   useEffect(() => {
-    if (
-      !transportistaId ||
-      clienteRetiraSeleccionado
-    ) {
+    if (!transportistaId || clienteRetiraSeleccionado) {
       const timer = window.setTimeout(() => {
         setVehicle(null);
       }, 0);
@@ -282,100 +166,50 @@ export function EditDispatchModal({
       return () => window.clearTimeout(timer);
     }
 
-    void getVehicleByTransportista(
-      transportistaId
-    )
+    void getVehicleByTransportista(transportistaId)
       .then(setVehicle)
       .catch(() => {
         setVehicle(null);
 
-        setError(
-          "No se pudo consultar la placa del transportista."
-        );
+        setError("No se pudo consultar la placa del transportista.");
       });
-  }, [
-    transportistaId,
-    clienteRetiraSeleccionado,
-  ]);
+  }, [transportistaId, clienteRetiraSeleccionado]);
 
-  const currentResponsable =
-    useMemo(
-      () =>
-        responsables.find(
-          (item) =>
-            item.id ===
-            responsableId
-        )
-          ?.nombre_completo ??
-        row?.responsable_nombre ??
-        "-",
-      [
-        responsables,
-        responsableId,
-        row,
-      ]
-    );
+  const currentResponsable = useMemo(
+    () =>
+      responsables.find((item) => item.id === responsableId)?.nombre_completo ??
+      row?.responsable_nombre ??
+      "-",
+    [responsables, responsableId, row],
+  );
 
-  const currentCompany =
-    useMemo(
-      () =>
-        companias.find(
-          (item) =>
-            item.id ===
-            companiaId
-        )?.nombre ??
-        row?.compania_nombre ??
-        "-",
-      [
-        companias,
-        companiaId,
-        row,
-      ]
-    );
+  const currentCompany = useMemo(
+    () =>
+      companias.find((item) => item.id === companiaId)?.nombre ??
+      row?.compania_nombre ??
+      "-",
+    [companias, companiaId, row],
+  );
 
-  const currentRoute =
-    useMemo(
-      () =>
-        rutas.find(
-          (item) =>
-            item.id ===
-            rutaId
-        )?.numero ??
-        row?.ruta_numero ??
-        null,
-      [
-        rutas,
-        rutaId,
-        row,
-      ]
-    );
+  const currentRoute = useMemo(
+    () =>
+      rutas.find((item) => item.id === rutaId)?.numero ??
+      row?.ruta_numero ??
+      null,
+    [rutas, rutaId, row],
+  );
 
-  const currentTransportista =
-    useMemo(() => {
-      const selected =
-        transportistas.find(
-          (item) =>
-            item.id ===
-            transportistaId
-        );
+  const currentTransportista = useMemo(() => {
+    const selected = transportistas.find((item) => item.id === transportistaId);
 
-      if (selected) {
-        return `${selected.nombre} ${
-          selected.apellido === "-"
-            ? ""
-            : selected.apellido
-        }`.trim();
-      }
+    if (selected) {
+      return `${selected.nombre} ${
+        selected.apellido === "-" ? "" : selected.apellido
+      }`.trim();
+    }
 
-      return (
-        row?.transportista_nombre ??
-        "-"
-      );
-    }, [
-      transportistas,
-      transportistaId,
-      row,
-    ]);
+    return row?.transportista_nombre ?? "-";
+  }, [transportistas, transportistaId, row]);
 
   if (!row) {
     return null;
@@ -397,23 +231,15 @@ export function EditDispatchModal({
       // otro dato (por ejemplo, únicamente el Detalle).
       // Sí bloqueamos borrar accidentalmente información que antes existía.
       const missing = [
-        row.responsable_id && !responsableId
-          ? "Responsable"
-          : null,
+        row.responsable_id && !responsableId ? "Responsable" : null,
 
-        row.transportista_id && !transportistaId
-          ? "Transportista"
-          : null,
+        row.transportista_id && !transportistaId ? "Transportista" : null,
 
-        row.compania_id && !companiaId
-          ? "Compañía"
-          : null,
+        row.compania_id && !companiaId ? "Compañía" : null,
 
         // La ruta vuelve a ser obligatoria también en corrección ADMIN.
         // "Seleccionar ruta" (value="") significa dato faltante y no se guarda.
-        !rutaId
-          ? "Ruta"
-          : null,
+        !rutaId ? "Ruta" : null,
       ]
         .filter(Boolean)
         .join(", ");
@@ -426,14 +252,8 @@ export function EditDispatchModal({
       // Si se selecciona/asigna un transportista, la placa activa sigue
       // siendo obligatoria. Si el registro histórico nunca tuvo
       // transportista, no se inventa uno para poder guardar el detalle.
-      if (
-        transportistaId &&
-        !clienteRetiraSeleccionado &&
-        !vehicle
-      ) {
-        setError(
-          "El transportista seleccionado no tiene una placa asociada."
-        );
+      if (transportistaId && !clienteRetiraSeleccionado && !vehicle) {
+        setError("El transportista seleccionado no tiene una placa asociada.");
         return;
       }
     }
@@ -447,8 +267,7 @@ export function EditDispatchModal({
       // antiguo, forzamos la corrección completa aunque el resto del
       // contexto no haya cambiado, para que backend deje vehiculo_id NULL.
       const hasClienteRetiraVehicleMismatch =
-        clienteRetiraSeleccionado &&
-        row.vehiculo_id !== null;
+        clienteRetiraSeleccionado && row.vehiculo_id !== null;
 
       const contextUnchanged =
         !hasClienteRetiraVehicleMismatch &&
@@ -462,16 +281,13 @@ export function EditDispatchModal({
       if (operationalDispatched || contextUnchanged) {
         await correctDispatchDetail(row.id, normalizedDetalle);
       } else {
-        await correctDispatch(
-          row.id,
-          {
-            responsableId,
-            companiaId,
-            rutaId,
-            transportistaId,
-            detalle: normalizedDetalle,
-          }
-        );
+        await correctDispatch(row.id, {
+          responsableId,
+          companiaId,
+          rutaId,
+          transportistaId,
+          detalle: normalizedDetalle,
+        });
       }
 
       await onSaved();
@@ -481,7 +297,7 @@ export function EditDispatchModal({
       setError(
         cause instanceof Error
           ? cause.message
-          : "No se pudo corregir la factura."
+          : "No se pudo corregir la factura.",
       );
     } finally {
       setLoading(false);
@@ -499,10 +315,7 @@ export function EditDispatchModal({
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-semibold text-slate-100">
               Corregir factura:{" "}
-
-              <span className="text-amber-400">
-                {row.factura}
-              </span>
+              <span className="text-amber-400">{row.factura}</span>
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
@@ -527,248 +340,102 @@ export function EditDispatchModal({
         <div className="p-5">
           {canEditContext ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <Field
-                icon={UserRound}
-                label="Responsable"
-              >
+              <Field icon={UserRound} label="Responsable">
                 <select
-                  className={
-                    selectClass
-                  }
-                  value={
-                    responsableId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setResponsableId(
-                      event.target
-                        .value
-                    )
-                  }
+                  className={selectClass}
+                  value={responsableId}
+                  onChange={(event) => setResponsableId(event.target.value)}
                 >
-                  <option value="">
-                    Seleccionar responsable
-                  </option>
+                  <option value="">Seleccionar responsable</option>
 
-                  {responsables.map(
-                    (
-                      responsable
-                    ) => (
-                      <option
-                        key={
-                          responsable.id
-                        }
-                        value={
-                          responsable.id
-                        }
-                      >
-                        {
-                          responsable.nombre_completo
-                        }
-                      </option>
-                    )
-                  )}
+                  {responsables.map((responsable) => (
+                    <option key={responsable.id} value={responsable.id}>
+                      {responsable.nombre_completo}
+                    </option>
+                  ))}
                 </select>
               </Field>
 
-              <Field
-                icon={Truck}
-                label="Transportista"
-              >
+              <Field icon={Truck} label="Transportista">
                 <select
-                  className={
-                    selectClass
-                  }
-                  value={
-                    transportistaId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setTransportistaId(
-                      event.target
-                        .value
-                    )
-                  }
+                  className={selectClass}
+                  value={transportistaId}
+                  onChange={(event) => setTransportistaId(event.target.value)}
                 >
-                  <option value="">
-                    Seleccionar transportista
-                  </option>
+                  <option value="">Seleccionar transportista</option>
 
-                  {transportistas.map(
-                    (
-                      transportista
-                    ) => (
-                      <option
-                        key={
-                          transportista.id
-                        }
-                        value={
-                          transportista.id
-                        }
-                      >
-                        {
-                          transportista.nombre
-                        }{" "}
-                        {transportista.apellido ===
-                        "-"
-                          ? ""
-                          : transportista.apellido}
-                      </option>
-                    )
-                  )}
+                  {transportistas.map((transportista) => (
+                    <option key={transportista.id} value={transportista.id}>
+                      {transportista.nombre}{" "}
+                      {transportista.apellido === "-"
+                        ? ""
+                        : transportista.apellido}
+                    </option>
+                  ))}
                 </select>
 
                 {vehicle ? (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/15 bg-amber-500/[0.04] px-2.5 py-1.5 text-xs text-slate-400">
                     <Truck className="size-3.5 text-amber-400" />
-
                     Placa
-
                     <span className="font-semibold text-amber-300">
-                      {
-                        vehicle.placa
-                      }
+                      {vehicle.placa}
                     </span>
                   </div>
                 ) : null}
               </Field>
 
-              <Field
-                icon={
-                  Building2
-                }
-                label="Compañía"
-              >
+              <Field icon={Building2} label="Compañía">
                 <select
-                  className={
-                    selectClass
-                  }
-                  value={
-                    companiaId
-                  }
-                  onChange={(
-                    event
-                  ) => {
-                    setCompaniaId(
-                      event.target
-                        .value
-                    );
+                  className={selectClass}
+                  value={companiaId}
+                  onChange={(event) => {
+                    setCompaniaId(event.target.value);
 
                     setRutaId("");
                   }}
                 >
-                  <option value="">
-                    Seleccionar compañía
-                  </option>
+                  <option value="">Seleccionar compañía</option>
 
-                  {companias.map(
-                    (
-                      compania
-                    ) => (
-                      <option
-                        key={
-                          compania.id
-                        }
-                        value={
-                          compania.id
-                        }
-                      >
-                        {
-                          compania.nombre
-                        }
-                      </option>
-                    )
-                  )}
+                  {companias.map((compania) => (
+                    <option key={compania.id} value={compania.id}>
+                      {compania.nombre}
+                    </option>
+                  ))}
                 </select>
               </Field>
 
-              <Field
-                icon={
-                  MapPinned
-                }
-                label="Ruta"
-              >
+              <Field icon={MapPinned} label="Ruta">
                 <select
-                  className={
-                    selectClass
-                  }
-                  value={
-                    rutaId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setRutaId(
-                      event.target
-                        .value
-                    )
-                  }
+                  className={selectClass}
+                  value={rutaId}
+                  onChange={(event) => setRutaId(event.target.value)}
                 >
-                  <option value="">
-                    Seleccionar ruta
-                  </option>
+                  <option value="">Seleccionar ruta</option>
 
-                  {rutas.map(
-                    (
-                      ruta
-                    ) => (
-                      <option
-                        key={
-                          ruta.id
-                        }
-                        value={
-                          ruta.id
-                        }
-                      >
-                        {
-                          ruta.numero
-                        }
-                      </option>
-                    )
-                  )}
+                  {rutas.map((ruta) => (
+                    <option key={ruta.id} value={ruta.id}>
+                      {ruta.numero}
+                    </option>
+                  ))}
                 </select>
               </Field>
             </div>
           ) : (
             <div className="grid gap-2.5 md:grid-cols-2">
-              <ReadOnlyValue
-                label="Responsable"
-                value={
-                  currentResponsable
-                }
-              />
+              <ReadOnlyValue label="Responsable" value={currentResponsable} />
 
               <ReadOnlyValue
                 label="Transportista"
-                value={
-                  currentTransportista
-                }
-                secondary={
-                  row.placa
-                    ? `Placa · ${row.placa}`
-                    : undefined
-                }
+                value={currentTransportista}
+                secondary={row.placa ? `Placa · ${row.placa}` : undefined}
               />
 
-              <ReadOnlyValue
-                label="Compañía"
-                value={
-                  currentCompany
-                }
-              />
+              <ReadOnlyValue label="Compañía" value={currentCompany} />
 
               <ReadOnlyValue
                 label="Ruta"
-                value={
-                  currentRoute ===
-                  null
-                    ? "-"
-                    : String(
-                        currentRoute
-                      )
-                }
+                value={currentRoute === null ? "-" : String(currentRoute)}
               />
             </div>
           )}
@@ -779,17 +446,8 @@ export function EditDispatchModal({
             </Label>
 
             <Textarea
-              value={
-                detalle
-              }
-              onChange={(
-                event
-              ) =>
-                setDetalle(
-                  event.target
-                    .value
-                )
-              }
+              value={detalle}
+              onChange={(event) => setDetalle(event.target.value)}
               rows={4}
               className="min-h-24 resize-none border-white/10 bg-[#07111F] text-sm text-slate-100 placeholder:text-slate-700 focus-visible:border-amber-500/40 focus-visible:ring-amber-500/10"
               placeholder="Detalle del despacho"
@@ -807,12 +465,8 @@ export function EditDispatchModal({
           <Button
             type="button"
             variant="outline"
-            onClick={
-              onClose
-            }
-            disabled={
-              loading
-            }
+            onClick={onClose}
+            disabled={loading}
             className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.08] hover:text-white"
           >
             Cancelar
@@ -820,17 +474,11 @@ export function EditDispatchModal({
 
           <Button
             type="button"
-            onClick={() =>
-              void save()
-            }
-            disabled={
-              loading
-            }
+            onClick={() => void save()}
+            disabled={loading}
             className="bg-amber-500 text-slate-950 hover:bg-amber-600"
           >
-            {loading
-              ? "Guardando..."
-              : "Guardar corrección"}
+            {loading ? "Guardando..." : "Guardar corrección"}
           </Button>
         </div>
       </div>
@@ -843,11 +491,7 @@ function Field({
   label,
   children,
 }: {
-  icon:
-    | typeof UserRound
-    | typeof Truck
-    | typeof Building2
-    | typeof MapPinned;
+  icon: typeof UserRound | typeof Truck | typeof Building2 | typeof MapPinned;
 
   label: string;
 
@@ -881,14 +525,10 @@ function ReadOnlyValue({
         {label}
       </p>
 
-      <p className="mt-1 text-sm font-medium text-slate-200">
-        {value}
-      </p>
+      <p className="mt-1 text-sm font-medium text-slate-200">{value}</p>
 
       {secondary ? (
-        <p className="mt-1 text-[11px] text-amber-400/65">
-          {secondary}
-        </p>
+        <p className="mt-1 text-[11px] text-amber-400/65">{secondary}</p>
       ) : null}
     </div>
   );
