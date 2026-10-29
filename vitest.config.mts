@@ -15,6 +15,7 @@ export default defineConfig({
       include: [
         "src/domain/**",
         "src/lib/errors/**",
+        "src/lib/security/**",
         "src/lib/utils/**",
         "src/lib/utils.ts",
         "src/schemas/**",
