@@ -17,6 +17,15 @@ describe("safeErrorMessage", () => {
     );
   });
 
+  it("explica los límites de exportación y del último administrador", () => {
+    expect(safeErrorMessage({ message: "EXPORT_RANGE_TOO_LARGE" }, "x")).toBe(
+      "El periodo a exportar no puede superar un año.",
+    );
+    expect(safeErrorMessage({ message: "LAST_ADMIN_REQUIRED" }, "x")).toBe(
+      "Debe quedar al menos un administrador activo.",
+    );
+  });
+
   it("busca el código también en details", () => {
     expect(
       safeErrorMessage({ message: "error", details: "ADMIN_REQUIRED" }, "x"),

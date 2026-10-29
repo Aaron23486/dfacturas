@@ -66,8 +66,11 @@ const MESSAGE_MAP: Array<[RegExp, string]> = [
     "El despacho se encuentra en un estado no válido para esta operación.",
   ],
   [/DISPATCH_NOT_FOUND/i, "No se encontró el despacho solicitado."],
+  // Antes que ADMIN_REQUIRED, que también coincidiría.
+  [/LAST_ADMIN_REQUIRED/i, "Debe quedar al menos un administrador activo."],
   [/ADMIN_REQUIRED/i, "Esta operación requiere permisos de administrador."],
   [/ROUTE_DATA_INVALID/i, "Los datos de la ruta no son válidos."],
+  [/EXPORT_RANGE_TOO_LARGE/i, "El periodo a exportar no puede superar un año."],
   [
     /Permisos insuficientes/i,
     "No tiene permisos para realizar esta operación.",

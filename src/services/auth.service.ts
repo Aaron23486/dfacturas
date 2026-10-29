@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+
+import { securityEvent } from "@/lib/security/events";
 import {
   getAuthenticatedUser,
   getCurrentProfile,
@@ -23,6 +25,9 @@ export async function requireProfile(): Promise<UserProfile> {
 
 export async function requireAdmin(): Promise<UserProfile> {
   const profile = await requireProfile();
-  if (profile.role !== "ADMIN") redirect("/app?error=forbidden");
+  if (profile.role !== "ADMIN") {
+    securityEvent("admin.access_denied", { userId: profile.id });
+    redirect("/app?error=forbidden");
+  }
   return profile;
 }

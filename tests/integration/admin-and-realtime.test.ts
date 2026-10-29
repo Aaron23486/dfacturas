@@ -81,7 +81,9 @@ describe("último ADMIN activo", () => {
 });
 
 describe("historial en tiempo real", () => {
-  it("un suscriptor recibe el alta y el despacho de una factura", async () => {
+  // Justo después de arrancar la base, Realtime puede tardar unos segundos en entregar
+  // eventos; se reintenta con una factura nueva antes de dar la prueba por fallida.
+  async function scanTwiceAndCollect(): Promise<string[]> {
     const events: string[] = [];
     await operativo.client.realtime.setAuth();
     const channel = operativo.client
@@ -111,9 +113,20 @@ describe("historial en tiempo real", () => {
     });
     await operativo.client.rpc("scan_dispatch", { p_factura: factura });
 
-    await expect
-      .poll(() => events, { timeout: 10_000, interval: 250 })
-      .toEqual(expect.arrayContaining(["INSERT", "UPDATE"]));
+    const deadline = Date.now() + 8_000;
+    while (events.length < 2 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
     await operativo.client.removeChannel(channel);
-  });
+    return events;
+  }
+
+  it("un suscriptor recibe el alta y el despacho de una factura", async () => {
+    let events: string[] = [];
+    for (let attempt = 0; attempt < 3 && events.length < 2; attempt++) {
+      events = await scanTwiceAndCollect();
+    }
+
+    expect(events).toEqual(expect.arrayContaining(["INSERT", "UPDATE"]));
+  }, 60_000);
 });
