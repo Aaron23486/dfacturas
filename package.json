@@ -15,7 +15,10 @@
     "db:down": "supabase stop",
     "db:reset": "supabase db reset",
     "db:status": "supabase status",
-    "env:local": "node scripts/env-local.mts"
+    "env:local": "node scripts/env-local.mts",
+    "demo:setup": "node scripts/demo-setup.mts",
+    "create-admin": "node scripts/users.mts create --role ADMIN",
+    "users": "node scripts/users.mts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
