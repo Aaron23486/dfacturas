@@ -1,4 +1,6 @@
-export type DispatchStatus = "ATENDIENDO" | "DESPACHADA" | "PEDIDO_CANCELADO";
+import type { DispatchStatus } from "@/domain/dispatch/dispatch.constants";
+
+export type { DispatchStatus };
 
 export interface DispatchRecord {
   id: string;
@@ -56,21 +58,6 @@ export interface EditDispatchInput {
   detalle?: string | null;
 }
 
-export type ScanDecision =
-  | { kind: "AVAILABLE" }
-  | {
-      kind: "IN_PROGRESS";
-      dispatch: DispatchRecord;
-    }
-  | {
-      kind: "ALREADY_DISPATCHED";
-      dispatch: DispatchRecord;
-    }
-  | {
-      kind: "CANCELLED";
-      dispatch: DispatchRecord;
-    };
-
 export interface DailyKpis {
   despachadas: number;
   atendiendo: number;
@@ -79,31 +66,5 @@ export interface DailyKpis {
   top: Array<{
     nombre: string;
     total: number;
-  }>;
-}
-
-export interface DashboardStats {
-  total: number;
-  despachadas: number;
-  canceladas: number;
-  promedioMinutos: number;
-  minimoMinutos: number;
-  maximoMinutos: number;
-  rutaTop: string;
-  companias: Array<{
-    label: string;
-    value: number;
-  }>;
-  responsables: Array<{
-    label: string;
-    value: number;
-  }>;
-  transportistas: Array<{
-    label: string;
-    value: number;
-  }>;
-  rutas: Array<{
-    label: string;
-    value: number;
   }>;
 }
