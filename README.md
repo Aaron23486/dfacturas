@@ -1,434 +1,205 @@
 # DFacturas
 
-<!-- portfolio-badges-start -->
+Dispatch control for a distribution center. Each invoice is scanned once when its order starts being prepared and again when it leaves; operators work from a scanner-friendly screen with a live history, and administrators get catalogs, analytics, Excel export and an audit trail.
 
-![Next.js](https://img.shields.io/badge/Next.js-16.3.8-black?logo=nextdotjs)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)
-![Vitest](https://img.shields.io/badge/tests-13%2F13-passing?logo=vitest)
-![Security](https://img.shields.io/badge/production%20audit-0%20vulnerabilities-success)
+Built with Next.js, TypeScript and Supabase. PostgreSQL enforces every permission and business rule, so the browser is never trusted.
 
-<!-- portfolio-badges-end -->
+## Screenshots
 
-A role-aware logistics dispatch application built with **Next.js, TypeScript, Supabase and PostgreSQL**. DFacturas models a real operational workflow in which an invoice is scanned once to begin dispatch handling and scanned again to complete it, while administrative users manage catalogs, analytics and audit history.
+![Dispatch screen: scanning form, company and route selection, live history](docs/images/dfacturas-dispatch.png)
 
-The project is designed as a portfolio-grade application with an emphasis on **domain rules, authorization at the data layer, traceability, transactional RPCs and maintainable separation of concerns**.
+| Dashboard                                                                             | Configuration                                                               |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| ![Administrative dashboard with KPIs and charts](docs/images/dfacturas-dashboard.png) | ![Company and route configuration](docs/images/dfacturas-configuration.png) |
 
-<!-- access-callout-start -->
+- **Dispatch:** scan form with responsible person, carrier and plate, company and route, and the live history of the latest dispatches.
+- **Dashboard:** KPIs, distribution by company and status, ranking by responsible person, routes and average time, six-month comparison, cross-filters and Excel export.
+- **Configuration:** companies and their numbered routes.
 
-> **Access model:** DFacturas includes email/password login but intentionally has no public sign-up. It is designed as an internal logistics application. To run your own instance, create the user manually in **Supabase Dashboard > Authentication > Users**, then activate the associated profile and assign its role.
+## Features
 
-<!-- access-callout-end -->
+- **Two-scan flow:** the first scan of a 20-digit invoice starts a dispatch (`ATENDIENDO`), the second closes it (`DESPACHADA`); further scans are blocked with an explanation.
+- **Cancelled orders** with a mandatory reason; a cancelled invoice cannot be dispatched.
+- **Live history** of the latest 300 dispatches, updated in real time for every user.
+- **Corrections and soft deletion** with role-based limits, author and reason.
+- **`CLIENTE RETIRA`** (customer pickup) as a carrier that never has a plate, enforced by the database.
+- **Dashboard and Excel export** for administrators; exports are limited to a year and recorded.
+- **Catalogs:** responsible staff, carriers and plates, companies and routes.
+- **Audit log** of changes to sensitive tables.
+- **Two roles**, `ADMIN` and `OPERATIVO`; accounts are managed from the terminal, with no public sign-up.
 
-## Product preview
-
-<!-- product-preview-start -->
-
-### Operational analytics
-
-The administrative dashboard provides operational KPIs, date-range analysis, dispatch distribution, route performance and responsible-person rankings.
-
-![DFacturas administrative dashboard](docs/images/dfacturas-dashboard.png)
-
-### Dispatch workflow
-
-The central operational module handles invoice scanning, responsible/carrier assignment, company and route context, dispatch state transitions and real-time history.
-
-![DFacturas dispatch workflow](docs/images/dfacturas-dispatch.png)
-
-### Administration
-
-Administrative users manage companies and their associated routes through a focused configuration interface.
-
-![DFacturas company and route configuration](docs/images/dfacturas-configuration.png)
-
-<!-- product-preview-end -->
-
-## Highlights
-
-- 20-digit invoice scanning workflow: first scan starts a dispatch, second scan finalizes it.
-- Dispatch states: `ATENDIENDO`, `DESPACHADA`, `PEDIDO_CANCELADO`.
-- Role model with `ADMIN` and `OPERATIVO` profiles.
-- Server-side route guards plus PostgreSQL Row Level Security (RLS).
-- Critical mutations executed through PostgreSQL RPCs instead of unrestricted table writes.
-- Soft-delete semantics for operational history.
-- Audit log for sensitive table changes.
-- Admin dashboard with date ranges, cross-filters, operational KPIs, charts and Excel export.
-- Catalog management for responsables, carriers, vehicles, companies and routes.
-- Special `CLIENTE RETIRA` workflow enforced as a domain invariant rather than by display text alone.
-- Safe application error mapping that avoids exposing raw PostgreSQL/Supabase errors to users.
-- Unit tests for auth and dispatch domain rules, plus a SQL hardening verifier.
+The full list, with business rules, is in [docs/requirements.md](docs/requirements.md).
 
 ## Tech stack
 
-| Layer             | Technology                                                |
-| ----------------- | --------------------------------------------------------- |
-| Framework         | Next.js 16.3.8 (App Router)                               |
-| UI                | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts   |
-| Language          | TypeScript 5.9                                            |
-| Validation        | Zod 4                                                     |
-| Auth / Data       | Supabase Auth + PostgreSQL                                |
-| Database security | RLS, grants, security-definer RPCs, constraints, triggers |
-| Testing           | Vitest 5                                                  |
-| Deployment        | Optional; Vercel-compatible with Supabase                 |
-
-## Functional modules
-
-The main navigation exposes five operational modules:
-
-1. **Dashboard** — admin analytics, KPIs, charts, filters and Excel export.
-2. **Despacho** — invoice scan workflow, history, cancellation and correction flows.
-3. **Responsables** — operational personnel catalog; all active users can read it, while mutations remain admin-protected at the database layer.
-4. **Transportistas** — carrier and vehicle catalog with controlled RPC-based mutations.
-5. **Configuración** — admin-only company and route administration.
-
-An internal `/admin/auditoria` route is also available to `ADMIN` users for audit inspection; it is intentionally not a sixth top-level navigation module.
+| Layer         | Technology                                                                             |
+| ------------- | -------------------------------------------------------------------------------------- |
+| Framework     | Next.js 16.4 (App Router), React 19.2                                                  |
+| Language      | TypeScript 5.9 (strict)                                                                |
+| UI            | Tailwind CSS 4, Base UI / shadcn primitives, Lucide, Recharts                          |
+| Validation    | Zod 4                                                                                  |
+| Data and auth | Supabase (Auth, PostgREST, Realtime) on PostgreSQL 17                                  |
+| Testing       | Vitest (unit and integration), Playwright with axe-core (end to end and accessibility) |
+| Tooling       | Supabase CLI, ESLint, Prettier, GitHub Actions, Dependabot                             |
 
 ## Architecture
 
-DFacturas uses a layered, feature-oriented structure:
-
-```text
-Next.js routes / layouts
-        ↓
-Feature components
-        ↓
-Services / use-case orchestration
-        ↓
-Pure domain rules + Zod boundaries
-        ↓
-Repositories
-        ↓
-Supabase client
-        ↓
-PostgreSQL (RLS + RPC + constraints + triggers)
+```mermaid
+flowchart LR
+    B[Browser] -->|pages, login| N[Next.js<br/>proxy + App Router]
+    B -->|queries, RPC, Realtime| S[Supabase<br/>Auth · PostgREST · Realtime]
+    N --> S
+    S --> P[(PostgreSQL<br/>RLS · RPC · constraints · audit)]
 ```
 
-The important rule is that **UI visibility is not authorization**. Components may hide or disable actions according to role, but PostgreSQL remains the security boundary for protected data and critical writes.
+- Pages are guarded on the server; the interactive screens query Supabase directly with the user's session.
+- Every table has row-level security, and dispatch changes go only through `SECURITY DEFINER` functions that check the session, role and current state. Invoice uniqueness, route/company and carrier/plate consistency, and state timestamps are database constraints.
+- Concurrent scans of one invoice are serialized with an advisory lock.
+- Each response carries a nonce-based Content Security Policy, and sessions are bounded and revoked on sign-out.
 
-See [Architecture](docs/architecture.md) for the design rationale and concrete code examples.
-
-## Engineering principles in the codebase
-
-The project does not treat architectural labels as decoration. The repository demonstrates them through concrete boundaries:
-
-- **Single Responsibility / SOLID-oriented design:** domain rules, service orchestration, repositories, validation and UI are kept in distinct modules.
-- **DRY:** shared authorization helpers, error translation, constants, repository mappings and reusable UI primitives avoid duplicated business behavior.
-- **Separation of Concerns:** React components do not own PostgreSQL authorization rules; repositories do not render UI; domain functions do not depend on React or Supabase.
-- **Single Source of Truth:** database constraints and RPCs enforce critical dispatch invariants even when a client is bypassed.
-- **Atomic Design-inspired composition:** reusable low-level UI primitives live in `src/components/ui`, application-level composites in `src/components/app`, and domain-specific compositions inside `src/features/*/components`.
-- **Least privilege:** anonymous access is revoked, direct writes are limited, privileged RPCs validate role/state, and internal validators are not executable by authenticated clients.
+Details are in [docs/architecture.md](docs/architecture.md) and [docs/database.md](docs/database.md).
 
 ## Project structure
 
 ```text
 src/
-├─ app/                 Next.js routes, layouts and server boundaries
-├─ components/
-│  ├─ ui/               reusable UI primitives
-│  └─ app/              reusable application shell/navigation/dialogs
-├─ constants/           shared constants
-├─ domain/              pure domain rules and unit tests
-├─ features/            feature-specific UI and domain code
-├─ lib/                 Supabase clients, errors and utilities
-├─ repositories/        data access and RPC adapters
-├─ schemas/             Zod input validation
-├─ services/            use-case orchestration and access guards
-└─ types/               shared TypeScript contracts
-
+├─ app/              routes, layouts, login server actions
+├─ features/         dispatch, dashboard, configuration, responsables, transportistas
+├─ components/       UI primitives and application shell
+├─ domain/           pure rules (invoice format, scan decision, roles)
+├─ services/         use cases and access guards
+├─ repositories/     Supabase queries and RPC calls
+├─ schemas/          Zod input validation
+├─ lib/              Supabase clients, CSP, security events, safe errors
+└─ proxy.ts          session refresh, CSP nonce, redirects
 supabase/
-├─ migrations/          immutable forward-only schema history
-├─ tests/               read-only database hardening verification
-└─ seed/                intentionally contains no production data
+├─ migrations/       forward-only schema history
+├─ tests/            SQL verifiers
+└─ config.toml       local stack (ports 553xx)
+scripts/             env:local, users, demo:setup, db:verify
+tests/integration/   tests against the database
+e2e/                 Playwright end-to-end and accessibility tests
+docs/                requirements, architecture, decisions, security, testing
 ```
 
-## Database model
+## Prerequisites
 
-Primary tables:
+- Node.js 22.18 or later (`.nvmrc` pins 22.23.3)
+- npm 10
+- Docker (for the local Supabase stack)
 
-- `profiles`
-- `responsables`
-- `companias`
-- `rutas`
-- `transportistas`
-- `vehiculos`
-- `despachos`
-- `audit_logs`
-
-Important database invariants include invoice format, active-invoice uniqueness, route/company consistency, vehicle/carrier consistency, state/timestamp consistency, cancellation reason requirements and soft-delete metadata requirements.
-
-See [Database](docs/database.md) for the relational model and migration strategy.
-
-## Security model
-
-DFacturas uses defense in depth:
-
-- Supabase Auth for authentication.
-- `profiles.role` and `profiles.active` for application authorization context.
-- RLS on all application tables.
-- Explicit grants/revokes for table and function privileges.
-- Critical dispatch mutations through RPCs.
-- `SECURITY DEFINER` functions with hardened `search_path` where privileged execution is required.
-- New auth profiles default to `OPERATIVO` **and inactive** as a defense-in-depth safeguard.
-- Public signup and anonymous sign-in are expected to be disabled in the deployed Supabase Auth configuration.
-- Soft-deleted dispatch rows are hidden from non-admin operational users.
-- Sensitive mutation history is recorded in `audit_logs`.
-- Browser code never requires a `service_role` or `sb_secret_*` key.
-
-See [Security](docs/security.md) for controls, threat boundaries and deployment settings.
-
-## Authentication and user provisioning
-
-<!-- user-provisioning-start -->
-
-DFacturas includes a complete email/password authentication flow, but intentionally does **not** expose self-service registration.
-
-This is a security decision, not a missing feature. DFacturas models an internal logistics system in which the organization controls who can access the application.
-
-### Access model
-
-Authentication and authorization are separate concerns:
-
-```text
-Supabase Auth
-    |
-    v
-Authenticated identity
-    |
-    v
-public.profiles
-    |
-    +-- active = false -> access denied
-    |
-    +-- active = true
-            |
-            +-- OPERATIVO
-            |
-            +-- ADMIN
-```
-
-- **Supabase Auth** verifies the user's email/password identity.
-- `public.profiles` determines whether that authenticated identity can use DFacturas.
-- New profiles are created with the `OPERATIVO` role.
-- New profiles remain inactive until explicitly enabled.
-- `ADMIN` privileges must be granted intentionally.
-- Public sign-up and anonymous authentication remain disabled.
-
-Creating an Auth user therefore does **not** automatically grant application access.
-
-### Create the first user
-
-After creating your own Supabase project and applying the database migrations:
-
-1. Open **Supabase Dashboard > Authentication > Users**.
-2. Select **Add user**.
-3. Create the account with an email address and password.
-4. The database trigger creates the associated row in `public.profiles`.
-5. Open **SQL Editor**.
-6. Activate the profile and assign the required role.
-7. Start DFacturas and sign in through `/login`.
-
-Verify the Auth user and application profile:
-
-```sql
-select
-  u.id,
-  u.email,
-  p.role,
-  p.active
-from auth.users u
-join public.profiles p
-  on p.id = u.id
-order by u.created_at desc;
-```
-
-Enable an operational user:
-
-```sql
-update public.profiles p
-set
-  role = 'OPERATIVO'::public.app_role,
-  active = true,
-  updated_at = now()
-from auth.users u
-where u.id = p.id
-  and u.email = 'operator@example.com';
-```
-
-Enable an administrator:
-
-```sql
-update public.profiles p
-set
-  role = 'ADMIN'::public.app_role,
-  active = true,
-  updated_at = now()
-from auth.users u
-where u.id = p.id
-  and u.email = 'admin@example.com';
-```
-
-Replace the example email with the user created in your own Supabase project.
-
-### Roles
-
-| Role        | Access                                                                                 |
-| ----------- | -------------------------------------------------------------------------------------- |
-| `OPERATIVO` | Authorized dispatch operations                                                         |
-| `ADMIN`     | Operations plus dashboard, catalogs, configuration, audit and administrative functions |
-
-### Credential policy
-
-The public repository intentionally contains no user passwords, shared demo credentials, Supabase `service_role` keys, database passwords, JWT signing secrets or other privileged credentials.
-
-Anyone evaluating the project can create an isolated Supabase instance, apply the migrations and provision their own users using the procedure above.
-
-> Do not enable public sign-up just to create the first account. Use **Authentication > Users > Add user** in Supabase instead.
-
-<!-- user-provisioning-end -->
-
-## Local setup
-
-### Requirements
-
-- Node.js `22.23.3` (see `.nvmrc`)
-- npm 10+
-- A Supabase project
-
-Clone the repository and install dependencies:
+## Getting started
 
 ```bash
+git clone https://github.com/Aaron23486/dfacturas.git
+cd dfacturas
 npm ci
+npm run db:up        # local Supabase: applies all migrations to an empty database
+npm run env:local    # writes .env.local with the local URL and publishable key
+npm run demo:setup   # demo accounts (passwords shown once) and fictional data
+npm run dev          # http://localhost:3000
 ```
 
-Copy the public environment template:
+The first `db:up` downloads the Supabase images and can take several minutes.
+
+## Environment configuration
+
+The web app needs only public values, written by `npm run env:local`:
+
+| Variable                               | Purpose                                             |
+| -------------------------------------- | --------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase API URL (`http://127.0.0.1:55321` locally) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key of that project                     |
+
+`.env.example` documents them. The secret key is never stored in the project: terminal scripts read it from `supabase status` or, for a hosted project, from `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` in the shell.
+
+## Database setup
+
+Each evaluator runs their own database. `npm run db:up` starts PostgreSQL, Auth, PostgREST and Realtime in Docker on ports 55321–55327 and applies `supabase/migrations` in order.
+
+| Command                     | Purpose                                                        |
+| --------------------------- | -------------------------------------------------------------- |
+| `npm run db:up` / `db:down` | Start or stop the local stack                                  |
+| `npm run db:status`         | URLs and keys of the local stack                               |
+| `npm run db:reset`          | Recreate the database from the migrations (deletes local data) |
+| `npm run db:verify`         | Run the SQL verifiers in `supabase/tests`                      |
+
+Studio is available at http://127.0.0.1:55323. To use a hosted project instead, see [docs/deployment.md](docs/deployment.md).
+
+## Authentication and demo access
+
+There is no public sign-up: accounts are created from the terminal, and new Auth identities start inactive.
 
 ```bash
-cp .env.example .env.local
+npm run demo:setup
 ```
 
-On PowerShell:
+It creates or refreshes two accounts and prints their generated passwords once:
 
-```powershell
-Copy-Item .env.example .env.local
-```
+| Role        | Email                           | Can                                                              |
+| ----------- | ------------------------------- | ---------------------------------------------------------------- |
+| `ADMIN`     | `admin@demo.dfacturas.test`     | Everything, including dashboard, export, configuration and audit |
+| `OPERATIVO` | `operativo@demo.dfacturas.test` | Scan, cancel, correct in-progress dispatches, add carriers       |
 
-Configure only your own public Supabase project values:
+On an empty database it also creates three companies with routes, eight responsible staff, nine carriers and about 240 dispatches over the last five months (invoices starting with `99`). Run it again to get new passwords. It refuses to run against a hosted project.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
-```
-
-Never place `service_role`, `sb_secret_*`, database passwords, JWT signing secrets or private credentials in `NEXT_PUBLIC_*` variables.
-
-### Database
-
-Apply migrations in order from `supabase/migrations/`. Migrations `001` through `005` are forward-only project history and should not be edited after application.
-
-With an authenticated Supabase CLI environment you can first inspect the planned changes:
-
-```powershell
-npx --no-install supabase db push --dry-run
-```
-
-Then apply them only after confirming that the expected migration set is correct:
-
-```powershell
-npx --no-install supabase db push
-```
-
-Alternatively, apply the SQL through the Supabase SQL Editor in exact migration order.
-
-### Auth configuration
-
-For the intended closed-demo deployment:
-
-- Email/password authentication: enabled.
-- Public signups: disabled.
-- Anonymous sign-ins: disabled.
-- Manual identity linking: disabled unless explicitly required.
-- Rate limits: enabled.
-- CAPTCHA: optional; only enable after integrating it into the login flow.
-- Site URL: set to the final deployed URL.
-- Redirect URLs: keep the allow-list minimal.
-
-### Run
+Account management:
 
 ```bash
-npm run dev
+npm run create-admin                              # first administrator (prompts for email and password)
+npm run users -- list
+npm run users -- create --role OPERATIVO --name "Nombre Apellido"
+npm run users -- deactivate <email>               # activate, set-role --role ADMIN, reset-password
 ```
 
-Open `http://localhost:3000`.
+Passwords are prompted, never passed as arguments, and need at least 12 characters with letters and digits. The database refuses to deactivate or demote the last active administrator.
 
-## Quality gates
+## Running locally
 
 ```bash
-npm test
-npx tsc --noEmit
-npm run lint
-npm audit --omit=dev
-npm run build
+npm run dev                      # development server on :3000
+npm run build && npm run start   # production build
 ```
 
-The validated pre-publication snapshot passed:
+Sign in at http://localhost:3000/login. To try the flow, select a responsible person, carrier, company and route, then type or scan a 20-digit invoice (for example `99000000000000009999`) twice.
 
-- **13/13 domain tests**
-- TypeScript check
-- ESLint
-- production dependency audit with **0 reported vulnerabilities**
-- Next.js production build using Webpack
-- pre-GitHub secret / sensitive-file gate
+## Testing and quality checks
 
-A read-only database hardening verifier is included at:
+| Command                                                     | What it runs                                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run format:check`, `npm run lint`, `npm run typecheck` | Prettier, ESLint, TypeScript                                                   |
+| `npm run test:coverage`                                     | Unit tests; fails below 85% coverage of the logic modules                      |
+| `npm run test:integration`                                  | Permissions, rules, concurrency and Realtime against the local database        |
+| `npm run test:e2e`                                          | Playwright on a production build (port 3100), including axe WCAG 2.1 AA checks |
 
-```text
-supabase/tests/20261004000005_security_hardening_verify.sql
-```
+Integration and end-to-end tests need `npm run db:up`; the first end-to-end run needs `npx playwright install chromium`. They create and remove their own accounts and data. CI runs all of them on every pull request. See [docs/testing.md](docs/testing.md).
 
-See [Testing](docs/testing.md) for exactly what is and is not covered.
+## Security
 
-## Deployment
+- Authorization in PostgreSQL: row-level security on every table, writes through validated RPCs, internal helpers closed to clients.
+- Bounded sessions (12 hours, 4 hours idle), revoked in the database as soon as the user signs out.
+- Per-request nonce CSP without inline scripts, HSTS and hardening headers.
+- Safe error messages, audit log, recorded and bounded exports, and security events without personal data.
+- Dependency audit and secret scanning in CI.
 
-<!-- deployment-optional-start -->
+Controls, how they are tested and the remaining risks are in [docs/security.md](docs/security.md). Please report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
-A public live deployment is **not required** to evaluate this portfolio project.
+## Engineering decisions
 
-DFacturas can be run locally with a dedicated Supabase project by following the setup and user-provisioning instructions above. The application is also compatible with Vercel if a hosted environment is desired later.
+- **The database is the security boundary.** I kept the rules in SQL so that no client, including a modified one, can skip them, and tested them against a real database instead of mocks ([ADR 0001](docs/decisions/0001-database-as-authorization-boundary.md)).
+- **Browser Supabase client, bounded cookie.** Moving every query and the live feed to the server would have rewritten most of the UI; instead I shortened the session, revoke it in the database and rely on a strict CSP ([ADR 0002](docs/decisions/0002-browser-client-and-readable-session-cookie.md), [ADR 0004](docs/decisions/0004-per-request-nonce-csp.md), [ADR 0005](docs/decisions/0005-live-session-check.md)).
+- **Local stack and terminal accounts.** Anyone can run the project with Docker and one command per step, without access to my Supabase project ([ADR 0003](docs/decisions/0003-local-supabase-and-terminal-accounts.md)).
+- **Traceable exports.** Data that leaves the system is limited and recorded ([ADR 0006](docs/decisions/0006-audited-bounded-exports.md)).
 
-Optional hosted topology:
+## Known limitations
 
-```text
-Browser
-   |
-   v
-Vercel / Next.js
-   |
-   v
-Supabase Auth + Data API
-   |
-   v
-PostgreSQL
-(RLS + RPC + constraints + audit)
-```
+- The session cookie is readable by JavaScript because the browser talks to Supabase directly; the CSP and short sessions limit the impact.
+- Login throttling relies on Supabase Auth's per-IP limits.
+- Password recovery is a terminal task; there is no "forgot password" screen.
+- The history shows the latest 300 dispatches; older ones are reached through the dashboard and export.
+- Dates in the dashboard and export use the America/Costa_Rica time zone.
+- The UI is in Spanish.
 
-See [Deployment](docs/deployment.md) for the optional release checklist.
+## License
 
-<!-- deployment-optional-end -->
-
-## Demo-data policy
-
-This repository must not contain production customer, employee, order, invoice or credential data. Use only fictional records in screenshots, local demos and test fixtures. The committed `supabase/seed` directory intentionally does not include production data.
-
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Database](docs/database.md)
-- [Security](docs/security.md)
-- [Testing](docs/testing.md)
-- [Deployment](docs/deployment.md)
-- [Versión en español](README.es.md)
-
-## Scope notes
-
-DFacturas is a portfolio implementation focused on dispatch operations, authorization, auditability and maintainable application structure. It is not presented as a generic ERP, accounting engine or invoicing tax platform.
+[MIT](LICENSE)

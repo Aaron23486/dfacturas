@@ -1,179 +1,83 @@
-# Deployment
+# Deployment (optional)
 
-## Target topology
-
-DFacturas is designed for a Vercel + Supabase deployment.
+The application is meant to be evaluated locally (see the [README](../README.md)). This guide covers running it on a hosted Supabase project with the Next.js app on Vercel or any Node host.
 
 ```mermaid
-flowchart TD
-    U[Browser] --> V[Vercel / Next.js]
-    V --> A[Supabase Auth]
-    V --> D[Supabase Data API]
-    D --> P[(PostgreSQL)]
-    P --> R[RLS / RPC / constraints / audit]
+flowchart LR
+    U[Browser] --> V[Next.js<br/>Vercel or Node]
+    U --> S[Supabase<br/>Auth · PostgREST · Realtime]
+    V --> S
+    S --> P[(PostgreSQL)]
 ```
 
-## 1. Pre-deployment quality gate
+## 1. Quality gate
 
-From a clean working tree/environment:
+From a clean checkout of the commit to deploy, CI must be green (`checks`, `supply-chain`, `integration`). Locally the equivalent is:
 
 ```bash
 npm ci
-npm test
-npx tsc --noEmit
-npm run lint
-npm audit --omit=dev
-npm run build
-git diff --check
+npm run format:check && npm run lint && npm run typecheck
+npm run test:coverage && npm run build
+npm run db:up && npm run db:verify && npm run test:integration && npm run test:e2e
 ```
-
-Do not deploy if secrets, `.env.local`, local backups or production data are staged/tracked.
 
 ## 2. Supabase project
 
-Use a dedicated Supabase project for the deployment. Never reuse a production database containing unrelated real operational data for a public portfolio demo.
+1. Create a dedicated project; never reuse a database with unrelated real data.
+2. Link and apply the migrations with the Supabase CLI:
 
-Required client environment values:
+   ```bash
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push --dry-run
+   npx supabase db push
+   ```
+
+3. Run the verifier in the SQL editor: `supabase/tests/20261004000005_security_hardening_verify.sql` (it raises `VERIFY_FAILED` if a control is missing).
+
+## 3. Auth settings
+
+`supabase/config.toml` applies these locally; on a hosted project set them in the dashboard:
+
+| Setting                                     | Value                                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------- |
+| Email provider                              | Enabled; **Allow new users to sign up: off**                                     |
+| Anonymous sign-ins, manual linking          | Off                                                                              |
+| Minimum password length                     | 10 or more                                                                       |
+| Secure password change                      | On                                                                               |
+| Sessions: time-box / inactivity timeout     | 12 h / 4 h (plan-dependent)                                                      |
+| Site URL, redirect URLs                     | The deployed origin only                                                         |
+| Rate limits                                 | Keep defaults or lower; consider CAPTCHA if the login is public                  |
+| Email templates for recovery and magic link | Not used by the app: customize them without links, or keep email rate limits low |
+| `pg_graphql`                                | Disable if unused                                                                |
+
+## 4. Application
+
+Set only the public values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
 ```
 
-The application does not require a browser-exposed `service_role` key.
+The secret key never goes into the app's environment. Build with `npm run build` and start with `npm run start`; serve over HTTPS (the app sends HSTS in production).
 
-## 3. Apply database migrations
+## 5. First administrator
 
-Apply `supabase/migrations/*` in exact order.
+From a terminal with the project's keys in the environment (not in `.env.local`):
 
-When using the CLI in an environment where the project is already linked/authenticated:
-
-```powershell
-npx --no-install supabase migration list
-npx --no-install supabase db push --dry-run
-npx --no-install supabase db push
+```bash
+SUPABASE_URL=... SUPABASE_PUBLISHABLE_KEY=... SUPABASE_SECRET_KEY=... npm run create-admin
 ```
 
-Confirm the dry run contains only the migration(s) you expect before pushing.
+Then create operators with `npm run users -- create`. `demo:setup` refuses to run against a hosted project.
 
-### Forward-only rule
+## 6. Smoke test
 
-Do not edit/reset/repair applied migrations `001`–`005`. Create a new later migration for future changes.
+- An unauthenticated visit to `/app` redirects to `/login`; wrong credentials show a generic message.
+- An operator can scan an invoice twice (`Atendiendo` → `Despachada`) and is redirected away from `/admin/*`.
+- An administrator sees the dashboard, exports a month and finds the export in `dashboard_exports`.
+- Response headers include the nonce CSP and HSTS.
 
-## 4. Verify database hardening
+## 7. Rollback
 
-Run in Supabase SQL Editor after migration `005`:
-
-```text
-supabase/tests/20261004000005_security_hardening_verify.sql
-```
-
-The script must finish without a `VERIFY_FAILED` exception.
-
-## 5. Configure Supabase Auth
-
-For the closed portfolio demo:
-
-### Sign In / Providers
-
-- Email: enabled.
-- Allow new users to sign up: **OFF**.
-- Allow manual linking: **OFF**, unless the application later requires identity linking.
-- Allow anonymous sign-ins: **OFF**.
-
-### Rate Limits
-
-Keep rate limiting enabled. Default project limits are suitable for normal demo traffic unless evidence shows a need to tune them.
-
-### Attack Protection
-
-- Leaked-password protection: enable when available.
-- CAPTCHA: leave disabled until the login UI is explicitly integrated with the selected CAPTCHA provider; enabling it only in Supabase can break login.
-
-### URL Configuration
-
-Before public deployment:
-
-- replace `http://localhost:3000` Site URL with the final HTTPS URL;
-- add only required redirect URLs;
-- avoid broad wildcard redirect rules unless there is a documented need.
-
-## 6. Create demo users
-
-Use fictional demo identities. Do not document real personal email accounts or passwords in the repository.
-
-Recommended setup:
-
-- one active `ADMIN` user;
-- one active `OPERATIVO` user;
-- optionally one inactive user for access-control testing.
-
-Because new profiles default to inactive, explicitly activate only the intended demo users and assign `ADMIN` only through an administrative database/dashboard process you control.
-
-Never commit demo passwords.
-
-## 7. Vercel
-
-Create/import the GitHub repository in Vercel.
-
-Set environment variables in Vercel project settings:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-```
-
-Do not add a service-role key unless a future server-only feature genuinely requires it; if that ever becomes necessary, it must remain server-only and must never use a `NEXT_PUBLIC_` prefix.
-
-The repository build command is:
-
-```text
-npm run build
-```
-
-which executes `next build --webpack`.
-
-## 8. Post-deployment smoke test
-
-Test with both roles:
-
-### ADMIN
-
-- login/logout;
-- dashboard loads and filters;
-- dispatch workflow;
-- responsables mutation;
-- transportistas/plates mutation;
-- company/route configuration;
-- audit route access.
-
-### OPERATIVO
-
-- login/logout;
-- dispatch workflow;
-- allowed catalog reads/actions;
-- dashboard/configuration/audit remain inaccessible according to authorization rules.
-
-### Security behavior
-
-- inactive account cannot enter the application;
-- invalid dispatch relationships are rejected;
-- soft-deleted dispatches are not exposed to OPERATIVO;
-- anonymous requests cannot execute protected RPCs;
-- no raw SQL/Supabase error details appear in the UI.
-
-## 9. Public-repository checklist
-
-Before the first public push:
-
-- `.env.example` contains placeholders only;
-- `.env.local` is ignored and untracked;
-- no `service_role`, `sb_secret_*`, JWTs, DB passwords or private keys exist in tracked files/history;
-- `backups/`, `.next/`, `node_modules/`, `.vercel/` and `supabase/.temp/` are ignored;
-- screenshots/fixtures contain only fictional data;
-- Git history has been reviewed for sensitive files if the repo existed before sanitization;
-- README/docs describe the current implementation, not planned features as if they already existed.
-
-## 10. Rollback principle
-
-Application deployments can be rolled back at the hosting layer, but applied database migrations remain forward-only. If a database change requires correction, ship a new corrective migration rather than rewriting an already-applied migration.
+Migrations are forward-only. Roll back the application to the previous release; if a migration must be undone, write a new migration that reverses it after testing it on a copy of the data.
