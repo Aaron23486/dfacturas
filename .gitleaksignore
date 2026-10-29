@@ -1,0 +1,5 @@
+# Contraseñas de prueba ficticias en tests/integration/password.test.ts (commit 43a2b55).
+# La prueba las genera al ejecutarse desde el commit siguiente; no son credenciales reales.
+43a2b559f444474fb8c51ba9cf6fae6f8f0dde2a:tests/integration/password.test.ts:generic-api-key:21
+43a2b559f444474fb8c51ba9cf6fae6f8f0dde2a:tests/integration/password.test.ts:generic-api-key:47
+43a2b559f444474fb8c51ba9cf6fae6f8f0dde2a:tests/integration/password.test.ts:generic-api-key:83
