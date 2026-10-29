@@ -178,6 +178,7 @@ Integration and end-to-end tests need `npm run db:up`; the first end-to-end run 
 
 - Authorization in PostgreSQL: row-level security on every table, writes through validated RPCs, internal helpers closed to clients.
 - Bounded sessions (12 hours, 4 hours idle), revoked in the database as soon as the user signs out.
+- Passwords change only from the terminal; a stolen session cannot lock the owner out.
 - Per-request nonce CSP without inline scripts, HSTS and hardening headers.
 - Safe error messages, audit log, recorded and bounded exports, and security events without personal data.
 - Dependency audit and secret scanning in CI.

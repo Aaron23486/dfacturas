@@ -129,6 +129,25 @@ export async function findAccountByEmail(
   }
 }
 
+// Cambia la contraseña con la función de terminal (migración 010): la base rechaza cualquier
+// otro cambio de contraseña, también el de la API de administración de Auth. Cierra además
+// las sesiones abiertas de la cuenta.
+export async function setPassword(
+  admin: SupabaseClient,
+  userId: string,
+  password: string,
+): Promise<void> {
+  const { error } = await admin.rpc("terminal_set_password", {
+    p_user_id: userId,
+    p_password: password,
+  });
+  if (error) {
+    throw new Error(
+      `No fue posible cambiar la contraseña (${error.code ?? "sin código"}).`,
+    );
+  }
+}
+
 export const ROLES = ["ADMIN", "OPERATIVO"] as const;
 export type Role = (typeof ROLES)[number];
 

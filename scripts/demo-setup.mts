@@ -26,6 +26,7 @@ import {
   adminClient,
   findAccountByEmail,
   resolveSupabaseTarget,
+  setPassword,
   setProfileAccess,
   signedInClient,
   type Role,
@@ -55,24 +56,25 @@ async function upsertAccount(
   password: string,
 ): Promise<string> {
   const existing = await findAccountByEmail(admin, account.email);
-  const result = existing
-    ? await admin.auth.admin.updateUserById(existing.id, { password })
-    : await admin.auth.admin.createUser({
-        email: account.email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: account.fullName },
-      });
-  if (result.error || !result.data.user) {
-    throw new Error(
-      `No fue posible preparar ${account.email}: ${result.error?.message}`,
-    );
+  let userId = existing?.id;
+  if (userId) {
+    await setPassword(admin, userId, password);
+  } else {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: account.email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: account.fullName },
+    });
+    if (error || !data.user) {
+      throw new Error(
+        `No fue posible preparar ${account.email}: ${error?.message}`,
+      );
+    }
+    userId = data.user.id;
   }
-  await setProfileAccess(admin, result.data.user.id, {
-    role: account.role,
-    active: true,
-  });
-  return result.data.user.id;
+  await setProfileAccess(admin, userId, { role: account.role, active: true });
+  return userId;
 }
 
 async function createCatalogs(app: SupabaseClient): Promise<void> {
