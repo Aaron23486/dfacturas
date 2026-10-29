@@ -335,13 +335,24 @@ function buildSummarySheet(input: {
 </worksheet>`;
 }
 
-export function downloadDashboardXlsx(input: {
+export type DashboardWorkbookInput = {
   rows: DashboardExportRow[];
   from: string;
   to: string;
   filters: DashboardCrossFilters;
   analytics: DashboardAnalytics;
-}) {
+};
+
+export function dashboardFileName(from: string, to: string): string {
+  return from === to
+    ? `Facturacion_V2_Despachos_${from}.xlsx`
+    : `Facturacion_V2_Despachos_${from}_a_${to}.xlsx`;
+}
+
+// Arma el .xlsx (ZIP sin compresión) sin tocar el DOM, para poder probarlo.
+export function buildDashboardWorkbook(
+  input: DashboardWorkbookInput,
+): Uint8Array {
   const files = [
     {
       name: "[Content_Types].xml",
@@ -429,7 +440,11 @@ export function downloadDashboardXlsx(input: {
     },
   ];
 
-  const bytes = makeZip(files);
+  return makeZip(files);
+}
+
+export function downloadDashboardXlsx(input: DashboardWorkbookInput) {
+  const bytes = buildDashboardWorkbook(input);
   const blob = new Blob([bytes.buffer as ArrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -438,10 +453,7 @@ export function downloadDashboardXlsx(input: {
   const anchor = document.createElement("a");
 
   anchor.href = url;
-  anchor.download =
-    input.from === input.to
-      ? `Facturacion_V2_Despachos_${input.from}.xlsx`
-      : `Facturacion_V2_Despachos_${input.from}_a_${input.to}.xlsx`;
+  anchor.download = dashboardFileName(input.from, input.to);
 
   document.body.appendChild(anchor);
   anchor.click();

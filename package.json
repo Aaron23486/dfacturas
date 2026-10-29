@@ -18,7 +18,10 @@
     "env:local": "node scripts/env-local.mts",
     "demo:setup": "node scripts/demo-setup.mts",
     "create-admin": "node scripts/users.mts create --role ADMIN",
-    "users": "node scripts/users.mts"
+    "users": "node scripts/users.mts",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "db:verify": "node scripts/db-verify.mts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -40,6 +43,7 @@
     "@types/node": "24.19.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@vitest/coverage-v8": "5.0.3",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.3",
     "prettier": "3.9.10",
