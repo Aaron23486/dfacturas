@@ -48,6 +48,7 @@ Accounts are provisioned from the terminal; there is no public sign-up.
 | R-8  | New Auth identities start as inactive `OPERATIVO` profiles; roles never come from client metadata.                                                               |
 | R-9  | At least one active `ADMIN` must always exist.                                                                                                                   |
 | R-10 | An operator may soft-delete only dispatches in `ATENDIENDO`; closed dispatches require an administrator and a reason.                                            |
+| R-11 | Passwords are set only from the terminal; signed-in sessions cannot change them, and a reset closes the account's sessions.                                      |
 
 ## Non-functional requirements
 

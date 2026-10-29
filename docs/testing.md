@@ -27,6 +27,7 @@ Coverage is measured on those logic modules (`vitest.config.mts`) with an 85% th
 | `admin-and-realtime.test.ts` | Last active ADMIN protected from the app and the service role; Realtime delivers inserts and updates                                                                                                                                                                  |
 | `session.test.ts`            | A copied token loses access as soon as the user signs out; other sessions are unaffected                                                                                                                                                                              |
 | `exports.test.ts`            | Period limit, export record contents, append-only log, OPERATIVO denied                                                                                                                                                                                               |
+| `password.test.ts`           | A session and the Auth admin API cannot change passwords; the terminal function can, enforces the password rule, closes open sessions and is closed to clients                                                                                                        |
 
 ## End-to-end tests (Playwright + axe)
 

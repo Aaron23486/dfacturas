@@ -19,5 +19,5 @@ I kept the browser client instead of moving every query and the Realtime feed be
 ## Consequences
 
 - JavaScript running in the page can still read the session; the CSP is the main barrier against that.
-- `secure_password_change` is enabled, but Supabase only asks for reauthentication when a session is older than 24 hours, so a valid (12-hour) session can change its own password through the Auth API. I accept this residual risk given the short session and immediate revocation.
+- A stolen session cannot change the account's password: since migration 010 the database rejects every password change that does not come from the terminal function, which also closes the account's sessions.
 - Moving data access to the server remains an option if the application grows.
