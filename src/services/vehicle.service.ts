@@ -1,3 +1,1 @@
-export {
-  getVehicleByTransportista,
-} from "@/repositories/vehicle.repository";
+export { getVehicleByTransportista } from "@/repositories/vehicle.repository";

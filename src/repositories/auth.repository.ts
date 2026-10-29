@@ -4,14 +4,19 @@ import type { UserProfile, UserRole } from "@/types/auth";
 
 export async function getAuthenticatedUser() {
   const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error || !user) return null;
   return user;
 }
 
 export async function getCurrentProfile(): Promise<UserProfile | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -20,7 +25,12 @@ export async function getCurrentProfile(): Promise<UserProfile | null> {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error) throw new AppError("No se pudo cargar el perfil del usuario.", "PROFILE_LOAD_FAILED", error);
+  if (error)
+    throw new AppError(
+      "No se pudo cargar el perfil del usuario.",
+      "PROFILE_LOAD_FAILED",
+      error,
+    );
   if (!data) return null;
 
   return {

@@ -10,16 +10,11 @@ export function SimpleBarChart({
   title: string;
   data: Item[];
 }) {
-  const max = Math.max(
-    1,
-    ...data.map((item) => item.value)
-  );
+  const max = Math.max(1, ...data.map((item) => item.value));
 
   return (
     <div className="rounded-2xl border border-white/8 bg-[#0B1626]/70 p-4 shadow-[0_16px_50px_rgba(0,0,0,.18)] backdrop-blur-xl">
-      <h3 className="mb-4 text-xs font-semibold text-slate-200">
-        {title}
-      </h3>
+      <h3 className="mb-4 text-xs font-semibold text-slate-200">{title}</h3>
 
       <div className="space-y-3">
         {data.slice(0, 10).map((item) => (
@@ -35,10 +30,7 @@ export function SimpleBarChart({
               <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400"
                 style={{
-                  width: `${Math.max(
-                    4,
-                    (item.value / max) * 100
-                  )}%`,
+                  width: `${Math.max(4, (item.value / max) * 100)}%`,
                 }}
               />
             </div>

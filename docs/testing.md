@@ -107,26 +107,26 @@ The script raises `VERIFY_FAILED` if a required control is absent. No exception 
 
 Before a public deployment, verify with separate test users:
 
-| Scenario | Expected result |
-| --- | --- |
-| ADMIN login | succeeds for active admin |
-| OPERATIVO login | succeeds for active operational user |
-| inactive user login/session | cannot enter operational application |
-| OPERATIVO dashboard | denied/disabled |
-| OPERATIVO configuration | denied/disabled |
-| OPERATIVO audit log | denied |
-| catalog read for active user | allowed according to RLS |
-| admin catalog mutation | allowed when data is valid |
-| direct unauthorized mutation | rejected by DB policy/privilege/RPC |
-| first invoice scan | creates `ATENDIENDO` |
-| second scan of same invoice | transitions to `DESPACHADA` |
-| scan dispatched invoice | blocked |
-| scan cancelled invoice | blocked |
-| cancel without reason | rejected |
-| invalid route/company pair | rejected |
-| invalid vehicle/carrier pair | rejected |
-| `CLIENTE RETIRA` + vehicle | rejected |
-| soft-deleted dispatch as OPERATIVO | not visible |
+| Scenario                           | Expected result                      |
+| ---------------------------------- | ------------------------------------ |
+| ADMIN login                        | succeeds for active admin            |
+| OPERATIVO login                    | succeeds for active operational user |
+| inactive user login/session        | cannot enter operational application |
+| OPERATIVO dashboard                | denied/disabled                      |
+| OPERATIVO configuration            | denied/disabled                      |
+| OPERATIVO audit log                | denied                               |
+| catalog read for active user       | allowed according to RLS             |
+| admin catalog mutation             | allowed when data is valid           |
+| direct unauthorized mutation       | rejected by DB policy/privilege/RPC  |
+| first invoice scan                 | creates `ATENDIENDO`                 |
+| second scan of same invoice        | transitions to `DESPACHADA`          |
+| scan dispatched invoice            | blocked                              |
+| scan cancelled invoice             | blocked                              |
+| cancel without reason              | rejected                             |
+| invalid route/company pair         | rejected                             |
+| invalid vehicle/carrier pair       | rejected                             |
+| `CLIENTE RETIRA` + vehicle         | rejected                             |
+| soft-deleted dispatch as OPERATIVO | not visible                          |
 
 ## What is not claimed
 

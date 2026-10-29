@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { getAuthenticatedUser, getCurrentProfile } from "@/repositories/auth.repository";
+import {
+  getAuthenticatedUser,
+  getCurrentProfile,
+} from "@/repositories/auth.repository";
 import type { UserProfile } from "@/types/auth";
 
 export async function requireUser() {

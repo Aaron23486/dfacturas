@@ -5,7 +5,5 @@ import { TransportistasAdmin } from "@/features/transportistas/components/transp
 export default async function Page() {
   const profile = await requireProfile();
 
-  return (
-    <TransportistasAdmin role={profile.role} />
-  );
+  return <TransportistasAdmin role={profile.role} />;
 }

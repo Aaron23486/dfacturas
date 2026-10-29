@@ -1,4 +1,4 @@
-﻿import type { Dispatch } from "./dispatch.types";
+import type { Dispatch } from "./dispatch.types";
 import type { DispatchScanContext } from "./dispatch.types";
 
 export function resolveDispatchScan(

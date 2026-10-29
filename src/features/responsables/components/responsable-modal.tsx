@@ -1,16 +1,10 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 import { AppDialog } from "@/components/app/app-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  createResponsable,
-  updateResponsable,
-} from "@/services/admin.service";
+import { createResponsable, updateResponsable } from "@/services/admin.service";
 import type { Responsable } from "@/types/catalog";
 
 export function ResponsableModal({
@@ -24,16 +18,11 @@ export function ResponsableModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const [gafete, setGafete] =
-    useState("");
-  const [nombre, setNombre] =
-    useState("");
-  const [activo, setActivo] =
-    useState(true);
-  const [loading, setLoading] =
-    useState(false);
-  const [error, setError] =
-    useState<string | null>(null);
+  const [gafete, setGafete] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [activo, setActivo] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -42,9 +31,7 @@ export function ResponsableModal({
 
     const timer = window.setTimeout(() => {
       setGafete(row?.gafete ?? "");
-      setNombre(
-        row?.nombre_completo ?? ""
-      );
+      setNombre(row?.nombre_completo ?? "");
       setActivo(row?.activo ?? true);
       setError(null);
     }, 0);
@@ -53,13 +40,8 @@ export function ResponsableModal({
   }, [open, row]);
 
   async function save() {
-    if (
-      !gafete.trim() ||
-      !nombre.trim()
-    ) {
-      setError(
-        "Gafete y nombre son obligatorios."
-      );
+    if (!gafete.trim() || !nombre.trim()) {
+      setError("Gafete y nombre son obligatorios.");
       return;
     }
 
@@ -68,14 +50,11 @@ export function ResponsableModal({
 
     try {
       if (row) {
-        await updateResponsable(
-          row.id,
-          {
-            gafete,
-            nombre_completo: nombre,
-            activo,
-          }
-        );
+        await updateResponsable(row.id, {
+          gafete,
+          nombre_completo: nombre,
+          activo,
+        });
       } else {
         await createResponsable({
           gafete,
@@ -86,11 +65,7 @@ export function ResponsableModal({
       await onSaved();
       onClose();
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "No se pudo guardar."
-      );
+      setError(cause instanceof Error ? cause.message : "No se pudo guardar.");
     } finally {
       setLoading(false);
     }
@@ -100,11 +75,7 @@ export function ResponsableModal({
     <AppDialog
       open={open}
       tone="info"
-      title={
-        row
-          ? "Editar responsable"
-          : "Agregar responsable"
-      }
+      title={row ? "Editar responsable" : "Agregar responsable"}
       description="Administre el gafete, nombre y estado."
       confirmLabel="Guardar"
       loading={loading}
@@ -113,31 +84,19 @@ export function ResponsableModal({
     >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Gafete
-          </Label>
+          <Label className="text-xs text-slate-300">Gafete</Label>
           <Input
             value={gafete}
-            onChange={(event) =>
-              setGafete(
-                event.target.value
-              )
-            }
+            onChange={(event) => setGafete(event.target.value)}
             className="border-white/10 bg-white/[0.04] text-slate-100"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Nombre completo
-          </Label>
+          <Label className="text-xs text-slate-300">Nombre completo</Label>
           <Input
             value={nombre}
-            onChange={(event) =>
-              setNombre(
-                event.target.value
-              )
-            }
+            onChange={(event) => setNombre(event.target.value)}
             className="border-white/10 bg-white/[0.04] text-slate-100"
           />
         </div>
@@ -147,11 +106,7 @@ export function ResponsableModal({
             <input
               type="checkbox"
               checked={activo}
-              onChange={(event) =>
-                setActivo(
-                  event.target.checked
-                )
-              }
+              onChange={(event) => setActivo(event.target.checked)}
             />
             Responsable activo
           </label>

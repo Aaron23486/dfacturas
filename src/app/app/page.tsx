@@ -15,10 +15,7 @@ export default async function AppPage() {
         </p>
       </div>
 
-      <DispatchWorkspace
-        userId={profile.id}
-        role={profile.role}
-      />
+      <DispatchWorkspace userId={profile.id} role={profile.role} />
     </div>
   );
 }

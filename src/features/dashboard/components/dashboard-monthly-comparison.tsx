@@ -45,10 +45,7 @@ function DashboardMonthlyComparisonComponent({
             data={data}
             margin={{ top: 12, right: 8, left: -18, bottom: 0 }}
           >
-            <CartesianGrid
-              vertical={false}
-              stroke="rgba(255,255,255,.045)"
-            />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,.045)" />
 
             <XAxis
               dataKey="label"
@@ -68,7 +65,8 @@ function DashboardMonthlyComparisonComponent({
             <Tooltip
               cursor={{ fill: "rgba(245,158,11,.035)" }}
               content={({ active, payload }) => {
-                const item = payload?.[0]?.payload as DashboardDatum | undefined;
+                const item = payload?.[0]?.payload as
+                  DashboardDatum | undefined;
 
                 if (!active || !item) {
                   return null;
@@ -97,9 +95,8 @@ function DashboardMonthlyComparisonComponent({
               isAnimationActive
               animationDuration={260}
               onClick={(entry) => {
-                const datum = (
-                  entry as unknown as { payload: DashboardDatum }
-                ).payload;
+                const datum = (entry as unknown as { payload: DashboardDatum })
+                  .payload;
 
                 onSelectMonth(datum.id);
               }}
@@ -123,5 +120,5 @@ function DashboardMonthlyComparisonComponent({
 }
 
 export const DashboardMonthlyComparison = memo(
-  DashboardMonthlyComparisonComponent
+  DashboardMonthlyComparisonComponent,
 );

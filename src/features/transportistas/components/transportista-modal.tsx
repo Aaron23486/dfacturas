@@ -72,11 +72,7 @@ export function TransportistaModal({
       await onSaved();
       onClose();
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "No se pudo guardar."
-      );
+      setError(cause instanceof Error ? cause.message : "No se pudo guardar.");
     } finally {
       setLoading(false);
     }
@@ -95,9 +91,7 @@ export function TransportistaModal({
     >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Nombre completo
-          </Label>
+          <Label className="text-xs text-slate-300">Nombre completo</Label>
           <Input
             value={nombreCompleto}
             onChange={(event) => setNombreCompleto(event.target.value)}
@@ -106,14 +100,10 @@ export function TransportistaModal({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Placa
-          </Label>
+          <Label className="text-xs text-slate-300">Placa</Label>
           <Input
             value={placa}
-            onChange={(event) =>
-              setPlaca(event.target.value.toUpperCase())
-            }
+            onChange={(event) => setPlaca(event.target.value.toUpperCase())}
             className="border-white/10 bg-white/[0.04] text-slate-100"
           />
         </div>

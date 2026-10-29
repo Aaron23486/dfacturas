@@ -13,17 +13,13 @@ import {
   YAxis,
 } from "recharts";
 
-import type {
-  DashboardRouteTimeDatum,
-} from "../domain/dashboard.types";
+import type { DashboardRouteTimeDatum } from "../domain/dashboard.types";
 
 type Props = {
   data: DashboardRouteTimeDatum[];
 };
 
-function DashboardRouteTimeChartComponent({
-  data,
-}: Props) {
+function DashboardRouteTimeChartComponent({ data }: Props) {
   return (
     <section
       data-dashboard-interactive="true"
@@ -41,10 +37,7 @@ function DashboardRouteTimeChartComponent({
 
       {data.length > 0 ? (
         <div className="h-[270px]">
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               layout="vertical"
@@ -89,19 +82,11 @@ function DashboardRouteTimeChartComponent({
                 cursor={{
                   fill: "rgba(245,158,11,.035)",
                 }}
-                content={({
-                  active,
-                  payload,
-                }) => {
-                  const item =
-                    payload?.[0]?.payload as
-                      | DashboardRouteTimeDatum
-                      | undefined;
+                content={({ active, payload }) => {
+                  const item = payload?.[0]?.payload as
+                    DashboardRouteTimeDatum | undefined;
 
-                  if (
-                    !active ||
-                    !item
-                  ) {
+                  if (!active || !item) {
                     return null;
                   }
 
@@ -112,16 +97,11 @@ function DashboardRouteTimeChartComponent({
                       </p>
 
                       <p className="mt-1 text-[11px] text-amber-400">
-                        Promedio:{" "}
-                        {Number(
-                          item.value
-                        ).toFixed(1)}{" "}
-                        min
+                        Promedio: {Number(item.value).toFixed(1)} min
                       </p>
 
                       <p className="text-[10px] text-slate-500">
-                        Despachos:{" "}
-                        {item.dispatches}
+                        Despachos: {item.dispatches}
                       </p>
                     </div>
                   );
@@ -139,12 +119,8 @@ function DashboardRouteTimeChartComponent({
                 <LabelList
                   dataKey="value"
                   position="right"
-                  formatter={(
-                    value: unknown
-                  ) =>
-                    `${Number(
-                      value
-                    ).toFixed(1)} min`
+                  formatter={(value: unknown) =>
+                    `${Number(value).toFixed(1)} min`
                   }
                   fill="#94a3b8"
                   fontSize={9}
@@ -164,7 +140,4 @@ function DashboardRouteTimeChartComponent({
   );
 }
 
-export const DashboardRouteTimeChart =
-  memo(
-    DashboardRouteTimeChartComponent
-  );
+export const DashboardRouteTimeChart = memo(DashboardRouteTimeChartComponent);

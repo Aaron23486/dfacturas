@@ -1,4 +1,4 @@
-﻿import type { DispatchStatus } from "./dispatch.constants";
+import type { DispatchStatus } from "./dispatch.constants";
 
 export type DispatchId = string;
 

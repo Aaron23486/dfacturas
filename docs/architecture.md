@@ -185,16 +185,16 @@ Database errors are not displayed directly. Known domain/database errors are map
 
 ## Navigation / access matrix
 
-| Area | OPERATIVO | ADMIN | Enforcement |
-| --- | --- | --- | --- |
-| Login / logout | Yes | Yes | Supabase Auth |
-| Dispatch workspace | Yes | Yes | active-profile guard + DB controls |
-| Responsables read | Yes | Yes | RLS |
-| Responsables mutation | No | Yes | DB policy/RPC + UI controls |
-| Transportistas read | Yes | Yes | RLS |
-| Protected carrier/vehicle mutation | constrained | Yes/admin operations | RPC/grants + domain checks |
-| Dashboard | No | Yes | `requireAdmin` + admin RPC |
-| Configuration | No | Yes | `requireAdmin` + DB authorization |
-| Audit log | No | Yes | `requireAdmin` + RLS |
+| Area                               | OPERATIVO   | ADMIN                | Enforcement                        |
+| ---------------------------------- | ----------- | -------------------- | ---------------------------------- |
+| Login / logout                     | Yes         | Yes                  | Supabase Auth                      |
+| Dispatch workspace                 | Yes         | Yes                  | active-profile guard + DB controls |
+| Responsables read                  | Yes         | Yes                  | RLS                                |
+| Responsables mutation              | No          | Yes                  | DB policy/RPC + UI controls        |
+| Transportistas read                | Yes         | Yes                  | RLS                                |
+| Protected carrier/vehicle mutation | constrained | Yes/admin operations | RPC/grants + domain checks         |
+| Dashboard                          | No          | Yes                  | `requireAdmin` + admin RPC         |
+| Configuration                      | No          | Yes                  | `requireAdmin` + DB authorization  |
+| Audit log                          | No          | Yes                  | `requireAdmin` + RLS               |
 
 The exact mutation permission depends on the operation/RPC; the table intentionally avoids describing UI-only restrictions as security controls.

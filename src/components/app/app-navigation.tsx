@@ -43,11 +43,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppNavigation({
-  items,
-}: {
-  items: NavigationItem[];
-}) {
+export function AppNavigation({ items }: { items: NavigationItem[] }) {
   const pathname = usePathname();
   const router = useRouter();
 

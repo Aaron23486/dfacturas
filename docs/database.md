@@ -22,16 +22,16 @@ erDiagram
 
 ### Tables
 
-| Table | Purpose |
-| --- | --- |
-| `profiles` | application role and active state for an Auth user |
-| `responsables` | personnel responsible for dispatch preparation |
-| `companias` | company/client catalog |
-| `rutas` | routes associated with a company |
-| `transportistas` | carrier catalog, including the special `CLIENTE RETIRA` flag |
-| `vehiculos` | vehicles/plates associated with a carrier |
-| `despachos` | operational invoice dispatch state and timestamps |
-| `audit_logs` | immutable-style record of sensitive row changes from database triggers |
+| Table            | Purpose                                                                |
+| ---------------- | ---------------------------------------------------------------------- |
+| `profiles`       | application role and active state for an Auth user                     |
+| `responsables`   | personnel responsible for dispatch preparation                         |
+| `companias`      | company/client catalog                                                 |
+| `rutas`          | routes associated with a company                                       |
+| `transportistas` | carrier catalog, including the special `CLIENTE RETIRA` flag           |
+| `vehiculos`      | vehicles/plates associated with a carrier                              |
+| `despachos`      | operational invoice dispatch state and timestamps                      |
+| `audit_logs`     | immutable-style record of sensitive row changes from database triggers |
 
 ## Enums
 
@@ -86,13 +86,13 @@ This avoids coupling a business invariant to a UI label string.
 
 The repository currently contains five applied forward-only migrations:
 
-| Version | Purpose |
-| --- | --- |
-| `20260930000001_initial_schema.sql` | relational baseline, enums, constraints, indexes and validation triggers |
-| `20260930000002_security_audit.sql` | profiles, auth helpers, RLS, grants and audit logging |
-| `20260930000003_dispatch_rpcs.sql` | transactional dispatch RPCs |
-| `20261002000004_original_ui_compatibility.sql` | compatibility/admin RPCs and dashboard analytics/export functions |
-| `20261004000005_security_hardening.sql` | least-privilege hardening, inactive-by-default users, soft-delete visibility, text limits and stricter RPC validation |
+| Version                                        | Purpose                                                                                                               |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `20260930000001_initial_schema.sql`            | relational baseline, enums, constraints, indexes and validation triggers                                              |
+| `20260930000002_security_audit.sql`            | profiles, auth helpers, RLS, grants and audit logging                                                                 |
+| `20260930000003_dispatch_rpcs.sql`             | transactional dispatch RPCs                                                                                           |
+| `20261002000004_original_ui_compatibility.sql` | compatibility/admin RPCs and dashboard analytics/export functions                                                     |
+| `20261004000005_security_hardening.sql`        | least-privilege hardening, inactive-by-default users, soft-delete visibility, text limits and stricter RPC validation |
 
 ### Rule: migrations are immutable after application
 

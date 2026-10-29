@@ -1,9 +1,6 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  normalizeInvoice,
-  validateInvoice,
-} from "./invoice.rules";
+import { normalizeInvoice, validateInvoice } from "./invoice.rules";
 
 describe("invoice rules", () => {
   it("normaliza espacios", () => {

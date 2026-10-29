@@ -3,7 +3,7 @@ import { AppError } from "@/lib/errors/app-error";
 import type { Vehiculo } from "@/types/catalog";
 
 export async function getVehicleByTransportista(
-  transportistaId: string
+  transportistaId: string,
 ): Promise<Vehiculo | null> {
   const supabase = createClient();
 
@@ -18,7 +18,7 @@ export async function getVehicleByTransportista(
     throw new AppError(
       "No se pudo consultar la placa del transportista.",
       "VEHICLE_LOOKUP_FAILED",
-      error
+      error,
     );
   }
 

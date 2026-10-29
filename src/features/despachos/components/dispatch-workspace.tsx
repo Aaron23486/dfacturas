@@ -19,25 +19,15 @@ import {
   UserRound,
 } from "lucide-react";
 
-import {
-  AppDialog,
-} from "@/components/app/app-dialog";
+import { AppDialog } from "@/components/app/app-dialog";
 
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
-import {
-  Input,
-} from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 
-import {
-  Label,
-} from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
 
-import {
-  Textarea,
-} from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   listCompaniasActivas,
@@ -46,19 +36,14 @@ import {
   listTransportistasActivos,
 } from "@/services/catalog.service";
 
-import {
-  deleteDispatch,
-  listDispatches,
-} from "@/services/dispatch.service";
+import { deleteDispatch, listDispatches } from "@/services/dispatch.service";
 
 import {
   inspectFacturaScan,
   processFacturaScan,
 } from "@/services/scan.service";
 
-import {
-  getVehicleByTransportista,
-} from "@/services/vehicle.service";
+import { getVehicleByTransportista } from "@/services/vehicle.service";
 
 import type {
   Compania,
@@ -68,51 +53,27 @@ import type {
   Vehiculo,
 } from "@/types/catalog";
 
-import type {
-  DailyKpis,
-  DispatchListItem,
-} from "@/types/dispatch";
+import type { DailyKpis, DispatchListItem } from "@/types/dispatch";
 
-import type {
-  UserRole,
-} from "@/types/auth";
+import type { UserRole } from "@/types/auth";
 
-import type {
-  ProcessScanResult,
-  ScanDispatchContext,
-} from "@/types/scan";
+import type { ProcessScanResult, ScanDispatchContext } from "@/types/scan";
 
-import {
-  createClient,
-} from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
-import {
-  durationMinutes,
-} from "@/lib/utils/date";
+import { durationMinutes } from "@/lib/utils/date";
 
-import {
-  DispatchTable,
-} from "./dispatch-table";
+import { DispatchTable } from "./dispatch-table";
 
-import {
-  EditDispatchModal,
-} from "./edit-dispatch-modal";
+import { EditDispatchModal } from "./edit-dispatch-modal";
 
-import {
-  ScanResultDialog,
-} from "./scan-result-dialog";
+import { ScanResultDialog } from "./scan-result-dialog";
 
-import {
-  CreateTransportistaModal,
-} from "@/features/transportistas/components/create-transportista-modal";
+import { CreateTransportistaModal } from "@/features/transportistas/components/create-transportista-modal";
 
-import {
-  CancelOrderDialog,
-} from "./cancel-order-dialog";
+import { CancelOrderDialog } from "./cancel-order-dialog";
 
-import {
-  FloatingMetrics,
-} from "@/features/metrics/components/floating-metrics";
+import { FloatingMetrics } from "@/features/metrics/components/floating-metrics";
 
 interface PersistedContext {
   responsableId: string;
@@ -121,15 +82,12 @@ interface PersistedContext {
   transportistaId: string;
 }
 
-type ConfirmState =
-  | {
-      kind: "DELETE";
-      row: DispatchListItem;
-    }
-  | null;
+type ConfirmState = {
+  kind: "DELETE";
+  row: DispatchListItem;
+} | null;
 
-const STORAGE_KEY =
-  "facturacion-v2:dispatch-context";
+const STORAGE_KEY = "facturacion-v2:dispatch-context";
 
 const NOOP_FINALIZE = async () => {};
 
@@ -137,25 +95,15 @@ const FACTURA_LENGTH = 20;
 const FACTURA_PATTERN = /^\d{20}$/;
 
 function normalizeFactura(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, FACTURA_LENGTH);
+  return value.replace(/\D/g, "").slice(0, FACTURA_LENGTH);
 }
 
 function isValidFactura(value: string) {
-  return FACTURA_PATTERN.test(
-    value.trim()
-  );
+  return FACTURA_PATTERN.test(value.trim());
 }
 
-function isClienteRetira(
-  transportista: Transportista | null | undefined
-) {
-  return (
-    transportista?.nombre
-      .trim()
-      .toUpperCase() === "CLIENTE RETIRA"
-  );
+function isClienteRetira(transportista: Transportista | null | undefined) {
+  return transportista?.nombre.trim().toUpperCase() === "CLIENTE RETIRA";
 }
 
 const EMPTY_CONTEXT: PersistedContext = {
@@ -168,69 +116,39 @@ const EMPTY_CONTEXT: PersistedContext = {
 function readPersisted(): PersistedContext {
   try {
     return JSON.parse(
-      localStorage.getItem(
-        STORAGE_KEY
-      ) ?? ""
+      localStorage.getItem(STORAGE_KEY) ?? "",
     ) as PersistedContext;
   } catch {
     return EMPTY_CONTEXT;
   }
 }
 
-function calculateKpis(
-  rows: DispatchListItem[]
-): DailyKpis {
+function calculateKpis(rows: DispatchListItem[]): DailyKpis {
   const now = new Date();
 
-  const isToday = (
-    value: string | null
-  ) => {
+  const isToday = (value: string | null) => {
     if (!value) {
       return false;
     }
 
-    const date =
-      new Date(value);
+    const date = new Date(value);
 
     return (
-      date.getFullYear() ===
-        now.getFullYear() &&
-      date.getMonth() ===
-        now.getMonth() &&
-      date.getDate() ===
-        now.getDate()
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
     );
   };
 
-  const todayRows =
-    rows.filter((row) =>
-      isToday(row.created_at)
-    );
+  const todayRows = rows.filter((row) => isToday(row.created_at));
 
-  const dispatched =
-    todayRows.filter(
-      (row) =>
-        row.estado ===
-        "DESPACHADA"
-    );
+  const dispatched = todayRows.filter((row) => row.estado === "DESPACHADA");
 
-  const durations =
-    dispatched
-      .map((row) =>
-        durationMinutes(
-          row.fecha_hora_inicio,
-          row.fecha_hora_final
-        )
-      )
-      .filter(
-        (
-          value
-        ): value is number =>
-          value !== null
-      );
+  const durations = dispatched
+    .map((row) => durationMinutes(row.fecha_hora_inicio, row.fecha_hora_final))
+    .filter((value): value is number => value !== null);
 
-  const counts =
-    new Map<string, number>();
+  const counts = new Map<string, number>();
 
   // El ranking operativo representa exclusivamente despachos finalizados.
   // PEDIDO_CANCELADO y ATENDIENDO no deben sumar al Top 1/2/3.
@@ -241,50 +159,30 @@ function calculateKpis(
 
     counts.set(
       row.responsable_nombre,
-      (counts.get(row.responsable_nombre) ?? 0) + 1
+      (counts.get(row.responsable_nombre) ?? 0) + 1,
     );
   }
 
   return {
-    despachadas:
-      dispatched.length,
+    despachadas: dispatched.length,
 
-    atendiendo:
-      todayRows.filter(
-        (row) =>
-          row.estado ===
-          "ATENDIENDO"
-      ).length,
+    atendiendo: todayRows.filter((row) => row.estado === "ATENDIENDO").length,
 
-    finalizadas:
-      dispatched.length,
+    finalizadas: dispatched.length,
 
-    promedioMinutos:
-      durations.length
-        ? Math.round(
-            durations.reduce(
-              (sum, value) =>
-                sum + value,
-              0
-            ) /
-              durations.length
-          )
-        : 0,
+    promedioMinutos: durations.length
+      ? Math.round(
+          durations.reduce((sum, value) => sum + value, 0) / durations.length,
+        )
+      : 0,
 
-    top: [
-      ...counts.entries(),
-    ]
-      .sort(
-        (a, b) =>
-          b[1] - a[1]
-      )
+    top: [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
-      .map(
-        ([nombre, total]) => ({
-          nombre,
-          total,
-        })
-      ),
+      .map(([nombre, total]) => ({
+        nombre,
+        total,
+      })),
   };
 }
 
@@ -295,197 +193,88 @@ export function DispatchWorkspace({
   userId: string;
   role: UserRole;
 }) {
-  const facturaRef =
-    useRef<HTMLInputElement>(
-      null
-    );
+  const facturaRef = useRef<HTMLInputElement>(null);
 
-  const [factura, setFactura] =
-    useState("");
+  const [factura, setFactura] = useState("");
 
-  const [detalle, setDetalle] =
-    useState("");
+  const [detalle, setDetalle] = useState("");
 
-  const [
-    responsables,
-    setResponsables,
-  ] = useState<
-    Responsable[]
-  >([]);
+  const [responsables, setResponsables] = useState<Responsable[]>([]);
 
-  const [
-    companias,
-    setCompanias,
-  ] = useState<Compania[]>([]);
+  const [companias, setCompanias] = useState<Compania[]>([]);
 
-  const [rutas, setRutas] =
-    useState<Ruta[]>([]);
+  const [rutas, setRutas] = useState<Ruta[]>([]);
 
-  const [
-    transportistas,
-    setTransportistas,
-  ] = useState<
-    Transportista[]
-  >([]);
+  const [transportistas, setTransportistas] = useState<Transportista[]>([]);
 
-  const [
-    responsableId,
-    setResponsableId,
-  ] = useState("");
+  const [responsableId, setResponsableId] = useState("");
 
-  const [
-    companiaId,
-    setCompaniaId,
-  ] = useState("");
+  const [companiaId, setCompaniaId] = useState("");
 
-  const [
-    rutaId,
-    setRutaId,
-  ] = useState("");
+  const [rutaId, setRutaId] = useState("");
 
-  const [
-    transportistaId,
-    setTransportistaId,
-  ] = useState("");
+  const [transportistaId, setTransportistaId] = useState("");
 
-  const [
-    selectedVehicle,
-    setSelectedVehicle,
-  ] = useState<
-    Vehiculo | null
-  >(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
 
-  const selectedTransportista =
-    useMemo(
-      () =>
-        transportistas.find(
-          (item) =>
-            item.id ===
-            transportistaId
-        ) ?? null,
-      [
-        transportistas,
-        transportistaId,
-      ]
-    );
+  const selectedTransportista = useMemo(
+    () => transportistas.find((item) => item.id === transportistaId) ?? null,
+    [transportistas, transportistaId],
+  );
 
-  const clienteRetiraSeleccionado =
-    isClienteRetira(
-      selectedTransportista
-    );
+  const clienteRetiraSeleccionado = isClienteRetira(selectedTransportista);
 
-  const [rows, setRows] =
-    useState<
-      DispatchListItem[]
-    >([]);
+  const [rows, setRows] = useState<DispatchListItem[]>([]);
 
-  const [
-    scanResult,
-    setScanResult,
-  ] = useState<
-    Extract<
-      ProcessScanResult,
-      {
-        kind:
-          | "BLOCKED_CANCELLED"
-          | "BLOCKED_ALREADY_DISPATCHED";
-      }
-    > | null
-  >(null);
+  const [scanResult, setScanResult] = useState<Extract<
+    ProcessScanResult,
+    {
+      kind: "BLOCKED_CANCELLED" | "BLOCKED_ALREADY_DISPATCHED";
+    }
+  > | null>(null);
 
-  const [confirm, setConfirm] =
-    useState<ConfirmState>(null);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
 
-  const [
-    deleteReason,
-    setDeleteReason,
-  ] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
 
-  const [
-    missingFields,
-    setMissingFields,
-  ] = useState<string[]>([]);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
-  const [
-    errorDialog,
-    setErrorDialog,
-  ] = useState<{
+  const [errorDialog, setErrorDialog] = useState<{
     title: string;
     message: string;
   } | null>(null);
 
-  const [
-    editRow,
-    setEditRow,
-  ] = useState<
-    DispatchListItem | null
-  >(null);
+  const [editRow, setEditRow] = useState<DispatchListItem | null>(null);
 
-  const [
-    transportModal,
-    setTransportModal,
-  ] = useState(false);
+  const [transportModal, setTransportModal] = useState(false);
 
-  const [
-    cancelOrderModal,
-    setCancelOrderModal,
-  ] = useState(false);
+  const [cancelOrderModal, setCancelOrderModal] = useState(false);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const refreshRows =
-    useCallback(
-      async () => {
-        setRows(
-          await listDispatches(
-            300
-          )
-        );
-      },
-      []
-    );
+  const refreshRows = useCallback(async () => {
+    setRows(await listDispatches(300));
+  }, []);
 
-  const refreshTransportistas =
-    useCallback(
-      async () => {
-        setTransportistas(
-          await listTransportistasActivos()
-        );
-      },
-      []
-    );
+  const refreshTransportistas = useCallback(async () => {
+    setTransportistas(await listTransportistasActivos());
+  }, []);
 
-  const requestDelete =
-    useCallback(
-      async (
-        row: DispatchListItem
-      ) => {
-        setDeleteReason("");
+  const requestDelete = useCallback(async (row: DispatchListItem) => {
+    setDeleteReason("");
 
-        setConfirm({
-          kind: "DELETE",
-          row,
-        });
-      },
-      []
-    );
+    setConfirm({
+      kind: "DELETE",
+      row,
+    });
+  }, []);
 
-  const requestEdit =
-    useCallback(
-      (
-        row: DispatchListItem
-      ) => {
-        setEditRow(row);
-      },
-      []
-    );
+  const requestEdit = useCallback((row: DispatchListItem) => {
+    setEditRow(row);
+  }, []);
 
   useEffect(() => {
-    const persisted =
-      readPersisted();
+    const persisted = readPersisted();
 
     void Promise.all([
       listResponsablesActivos(),
@@ -500,43 +289,26 @@ export function DispatchWorkspace({
           transportistasData,
           dispatchesData,
         ]) => {
-          setResponsables(
-            responsablesData
-          );
+          setResponsables(responsablesData);
 
-          setCompanias(
-            companiasData
-          );
+          setCompanias(companiasData);
 
-          setTransportistas(
-            transportistasData
-          );
+          setTransportistas(transportistasData);
 
-          setRows(
-            dispatchesData
-          );
+          setRows(dispatchesData);
 
-          setResponsableId(
-            persisted.responsableId
-          );
+          setResponsableId(persisted.responsableId);
 
-          setCompaniaId(
-            persisted.companiaId
-          );
+          setCompaniaId(persisted.companiaId);
 
-          setRutaId(
-            persisted.rutaId
-          );
+          setRutaId(persisted.rutaId);
 
-          setTransportistaId(
-            persisted.transportistaId
-          );
-        }
+          setTransportistaId(persisted.transportistaId);
+        },
       )
       .catch((cause) => {
         setErrorDialog({
-          title:
-            "No se pudo cargar la vista",
+          title: "No se pudo cargar la vista",
 
           message:
             cause instanceof Error
@@ -557,26 +329,19 @@ export function DispatchWorkspace({
       return () => window.clearTimeout(timer);
     }
 
-    void listRutasByCompania(
-      companiaId
-    )
+    void listRutasByCompania(companiaId)
       .then(setRutas)
       .catch(() => {
         setErrorDialog({
-          title:
-            "No se pudieron cargar las rutas",
+          title: "No se pudieron cargar las rutas",
 
-          message:
-            "Intente seleccionar nuevamente la compañía.",
+          message: "Intente seleccionar nuevamente la compañía.",
         });
       });
   }, [companiaId]);
 
   useEffect(() => {
-    if (
-      !transportistaId ||
-      clienteRetiraSeleccionado
-    ) {
+    if (!transportistaId || clienteRetiraSeleccionado) {
       const timer = window.setTimeout(() => {
         setSelectedVehicle(null);
       }, 0);
@@ -584,21 +349,12 @@ export function DispatchWorkspace({
       return () => window.clearTimeout(timer);
     }
 
-    void getVehicleByTransportista(
-      transportistaId
-    )
-      .then(
-        setSelectedVehicle
-      )
+    void getVehicleByTransportista(transportistaId)
+      .then(setSelectedVehicle)
       .catch(() => {
-        setSelectedVehicle(
-          null
-        );
+        setSelectedVehicle(null);
       });
-  }, [
-    transportistaId,
-    clienteRetiraSeleccionado,
-  ]);
+  }, [transportistaId, clienteRetiraSeleccionado]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -608,56 +364,35 @@ export function DispatchWorkspace({
         companiaId,
         rutaId,
         transportistaId,
-      })
+      }),
     );
-  }, [
-    responsableId,
-    companiaId,
-    rutaId,
-    transportistaId,
-  ]);
+  }, [responsableId, companiaId, rutaId, transportistaId]);
 
   useEffect(() => {
-    const supabase =
-      createClient();
+    const supabase = createClient();
 
-    const channel =
-      supabase
-        .channel(
-          "despachos-live"
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "despachos",
-          },
-          () =>
-            void refreshRows()
-        )
-        .subscribe();
+    const channel = supabase
+      .channel("despachos-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "despachos",
+        },
+        () => void refreshRows(),
+      )
+      .subscribe();
 
     return () => {
-      void supabase.removeChannel(
-        channel
-      );
+      void supabase.removeChannel(channel);
     };
   }, [refreshRows]);
 
-  const kpis =
-    useMemo(
-      () =>
-        calculateKpis(rows),
-      [rows]
-    );
+  const kpis = useMemo(() => calculateKpis(rows), [rows]);
 
   function focusScanner() {
-    window.setTimeout(
-      () =>
-        facturaRef.current?.focus(),
-      0
-    );
+    window.setTimeout(() => facturaRef.current?.focus(), 0);
   }
 
   function resetScan() {
@@ -677,34 +412,20 @@ export function DispatchWorkspace({
     setRutas([]);
     setMissingFields([]);
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(EMPTY_CONTEXT)
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(EMPTY_CONTEXT));
 
     focusScanner();
   }
 
-  async function hydrateDispatchContext(
-    dispatch: ScanDispatchContext
-  ) {
-    setResponsableId(
-      dispatch.responsable_id ?? ""
-    );
+  async function hydrateDispatchContext(dispatch: ScanDispatchContext) {
+    setResponsableId(dispatch.responsable_id ?? "");
 
-    setTransportistaId(
-      dispatch.transportista_id ?? ""
-    );
+    setTransportistaId(dispatch.transportista_id ?? "");
 
-    if (
-      dispatch.vehiculo_id &&
-      dispatch.transportista_id &&
-      dispatch.placa
-    ) {
+    if (dispatch.vehiculo_id && dispatch.transportista_id && dispatch.placa) {
       setSelectedVehicle({
         id: dispatch.vehiculo_id,
-        transportista_id:
-          dispatch.transportista_id,
+        transportista_id: dispatch.transportista_id,
         placa: dispatch.placa,
         activo: true,
       });
@@ -712,12 +433,9 @@ export function DispatchWorkspace({
       setSelectedVehicle(null);
     }
 
-    setDetalle(
-      dispatch.detalle ?? ""
-    );
+    setDetalle(dispatch.detalle ?? "");
 
-    const nextCompaniaId =
-      dispatch.compania_id ?? "";
+    const nextCompaniaId = dispatch.compania_id ?? "";
 
     setCompaniaId(nextCompaniaId);
 
@@ -727,57 +445,37 @@ export function DispatchWorkspace({
       return;
     }
 
-    const availableRoutes =
-      await listRutasByCompania(
-        nextCompaniaId
-      );
+    const availableRoutes = await listRutasByCompania(nextCompaniaId);
 
     setRutas(availableRoutes);
 
-    const storedRouteId =
-      dispatch.ruta_id ?? "";
+    const storedRouteId = dispatch.ruta_id ?? "";
 
     setRutaId(
       storedRouteId &&
-        availableRoutes.some(
-          (route) =>
-            route.id ===
-            storedRouteId
-        )
+        availableRoutes.some((route) => route.id === storedRouteId)
         ? storedRouteId
-        : ""
+        : "",
     );
   }
 
-  function getMissingFields(
-    includeFactura = true
-  ) {
-    const missing:
-      string[] = [];
+  function getMissingFields(includeFactura = true) {
+    const missing: string[] = [];
 
-    if (
-      includeFactura &&
-      !factura.trim()
-    ) {
+    if (includeFactura && !factura.trim()) {
       missing.push("Factura");
     }
 
     if (!responsableId) {
-      missing.push(
-        "Responsable"
-      );
+      missing.push("Responsable");
     }
 
     if (!transportistaId) {
-      missing.push(
-        "Transportista"
-      );
+      missing.push("Transportista");
     }
 
     if (!companiaId) {
-      missing.push(
-        "Compañía"
-      );
+      missing.push("Compañía");
     }
 
     if (!rutaId) {
@@ -787,9 +485,7 @@ export function DispatchWorkspace({
     return missing;
   }
 
-  async function resolveVehicleId(): Promise<
-    string | null | undefined
-  > {
+  async function resolveVehicleId(): Promise<string | null | undefined> {
     if (!transportistaId) {
       return null;
     }
@@ -802,15 +498,11 @@ export function DispatchWorkspace({
     }
 
     const vehicle =
-      selectedVehicle ??
-      (await getVehicleByTransportista(
-        transportistaId
-      ));
+      selectedVehicle ?? (await getVehicleByTransportista(transportistaId));
 
     if (!vehicle) {
       setErrorDialog({
-        title:
-          "Transportista sin placa",
+        title: "Transportista sin placa",
 
         message:
           "El transportista seleccionado no tiene una placa activa asociada. Corrija el registro antes de continuar.",
@@ -821,22 +513,16 @@ export function DispatchWorkspace({
       return undefined;
     }
 
-    setSelectedVehicle(
-      vehicle
-    );
+    setSelectedVehicle(vehicle);
 
     return vehicle.id;
   }
 
-  async function register(
-    event: FormEvent
-  ) {
+  async function register(event: FormEvent) {
     event.preventDefault();
 
     if (!factura.trim()) {
-      setMissingFields([
-        "Factura",
-      ]);
+      setMissingFields(["Factura"]);
       return;
     }
 
@@ -853,48 +539,32 @@ export function DispatchWorkspace({
     setLoading(true);
 
     try {
-      const existingContext =
-        await inspectFacturaScan(
-          factura.trim()
-        );
+      const existingContext = await inspectFacturaScan(factura.trim());
 
-      if (
-        existingContext?.estado ===
-        "ATENDIENDO"
-      ) {
-        await hydrateDispatchContext(
-          existingContext
-        );
+      if (existingContext?.estado === "ATENDIENDO") {
+        await hydrateDispatchContext(existingContext);
       }
 
-      const current =
-        existingContext
-          ? await processFacturaScan(
-              factura.trim(),
-              null,
-              userId,
-              existingContext
-            )
-          : null;
+      const current = existingContext
+        ? await processFacturaScan(
+            factura.trim(),
+            null,
+            userId,
+            existingContext,
+          )
+        : null;
 
       if (current) {
         if (
-          current.kind ===
-            "BLOCKED_CANCELLED" ||
-          current.kind ===
-            "BLOCKED_ALREADY_DISPATCHED"
+          current.kind === "BLOCKED_CANCELLED" ||
+          current.kind === "BLOCKED_ALREADY_DISPATCHED"
         ) {
-          setScanResult(
-            current
-          );
+          setScanResult(current);
 
           return;
         }
 
-        if (
-          current.kind ===
-          "FINALIZED"
-        ) {
+        if (current.kind === "FINALIZED") {
           resetScan();
 
           await refreshRows();
@@ -903,60 +573,43 @@ export function DispatchWorkspace({
         }
       }
 
-      const missing =
-        getMissingFields(
-          false
-        );
+      const missing = getMissingFields(false);
 
-      if (
-        missing.length > 0
-      ) {
-        setMissingFields(
-          missing
-        );
+      if (missing.length > 0) {
+        setMissingFields(missing);
 
         return;
       }
 
-      const vehicleId =
-        await resolveVehicleId();
+      const vehicleId = await resolveVehicleId();
 
       if (vehicleId === undefined) {
         return;
       }
 
-      const result =
-        await processFacturaScan(
-          factura.trim(),
-          {
-            factura:
-              factura.trim(),
+      const result = await processFacturaScan(
+        factura.trim(),
+        {
+          factura: factura.trim(),
 
-            responsableId,
-            companiaId,
-            rutaId,
-            transportistaId,
+          responsableId,
+          companiaId,
+          rutaId,
+          transportistaId,
 
-            vehiculoId:
-              vehicleId,
+          vehiculoId: vehicleId,
 
-            detalle:
-              detalle.trim() ||
-              null,
-          },
-          userId,
-          null
-        );
+          detalle: detalle.trim() || null,
+        },
+        userId,
+        null,
+      );
 
       if (
-        result.kind ===
-          "BLOCKED_CANCELLED" ||
-        result.kind ===
-          "BLOCKED_ALREADY_DISPATCHED"
+        result.kind === "BLOCKED_CANCELLED" ||
+        result.kind === "BLOCKED_ALREADY_DISPATCHED"
       ) {
-        setScanResult(
-          result
-        );
+        setScanResult(result);
 
         return;
       }
@@ -966,8 +619,7 @@ export function DispatchWorkspace({
       await refreshRows();
     } catch (cause) {
       setErrorDialog({
-        title:
-          "No se pudo procesar la factura",
+        title: "No se pudo procesar la factura",
 
         message:
           cause instanceof Error
@@ -979,18 +631,10 @@ export function DispatchWorkspace({
     }
   }
 
-  async function executeDelete(
-    row: DispatchListItem
-  ) {
-    const protectedState =
-      row.estado !==
-      "ATENDIENDO";
+  async function executeDelete(row: DispatchListItem) {
+    const protectedState = row.estado !== "ATENDIENDO";
 
-    if (
-      protectedState &&
-      role === "ADMIN" &&
-      !deleteReason.trim()
-    ) {
+    if (protectedState && role === "ADMIN" && !deleteReason.trim()) {
       return;
     }
 
@@ -1000,9 +644,7 @@ export function DispatchWorkspace({
       await deleteDispatch(
         row.id,
 
-        protectedState
-          ? deleteReason.trim()
-          : undefined
+        protectedState ? deleteReason.trim() : undefined,
       );
 
       setConfirm(null);
@@ -1018,8 +660,7 @@ export function DispatchWorkspace({
       setDeleteReason("");
 
       setErrorDialog({
-        title:
-          "No se pudo eliminar el registro",
+        title: "No se pudo eliminar el registro",
 
         message:
           cause instanceof Error
@@ -1059,9 +700,7 @@ export function DispatchWorkspace({
               {selectedVehicle ? (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/15 bg-amber-500/[0.045] px-3 py-1.5 text-xs text-slate-400">
                   <Truck className="size-3.5 text-amber-400" />
-
                   Placa
-
                   <span className="font-semibold text-amber-300">
                     {selectedVehicle.placa}
                   </span>
@@ -1081,31 +720,20 @@ export function DispatchWorkspace({
             </div>
           </div>
 
-          <form
-            onSubmit={register}
-            className="grid gap-3"
-          >
+          <form onSubmit={register} className="grid gap-3">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid content-start gap-3">
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
                     <ScanLine className="size-3.5 text-amber-400/70" />
-
                     Factura
                   </Label>
 
                   <Input
                     ref={facturaRef}
                     value={factura}
-                    onChange={(
-                      event
-                    ) =>
-                      setFactura(
-                        normalizeFactura(
-                          event.target
-                            .value
-                        )
-                      )
+                    onChange={(event) =>
+                      setFactura(normalizeFactura(event.target.value))
                     }
 
                     type="text"
@@ -1116,13 +744,13 @@ export function DispatchWorkspace({
                     autoComplete="off"
                     className="h-11 border-amber-500/20 bg-[#07111F] text-base text-slate-100 placeholder:text-sm placeholder:text-slate-700 focus-visible:border-amber-500/60 focus-visible:ring-amber-500/10"
                     onInvalid={(event) => {
-  event.currentTarget.setCustomValidity(
-    "Debe contener 20 números y sin letras."
-  );
-}}
-onInput={(event) => {
-  event.currentTarget.setCustomValidity("");
-}}
+                      event.currentTarget.setCustomValidity(
+                        "Debe contener 20 números y sin letras.",
+                      );
+                    }}
+                    onInput={(event) => {
+                      event.currentTarget.setCustomValidity("");
+                    }}
                   />
                 </div>
 
@@ -1133,14 +761,7 @@ onInput={(event) => {
 
                   <Textarea
                     value={detalle}
-                    onChange={(
-                      event
-                    ) =>
-                      setDetalle(
-                        event.target
-                          .value
-                      )
-                    }
+                    onChange={(event) => setDetalle(event.target.value)}
                     rows={3}
                     className="min-h-[84px] resize-none border-white/10 bg-[#07111F]/90 text-sm text-slate-100 placeholder:text-slate-700 focus-visible:border-amber-500/35"
                     placeholder="Detalle opcional"
@@ -1152,112 +773,55 @@ onInput={(event) => {
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
                     <UserRound className="size-3.5 text-amber-400/70" />
-
                     Responsable
                   </Label>
 
                   <select
-                    className={
-                      selectClass
-                    }
-                    value={
-                      responsableId
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setResponsableId(
-                        event.target
-                          .value
-                      )
-                    }
+                    className={selectClass}
+                    value={responsableId}
+                    onChange={(event) => setResponsableId(event.target.value)}
                   >
-                    <option value="">
-                      Seleccionar responsable
-                    </option>
+                    <option value="">Seleccionar responsable</option>
 
-                    {responsables.map(
-                      (
-                        responsable
-                      ) => (
-                        <option
-                          key={
-                            responsable.id
-                          }
-                          value={
-                            responsable.id
-                          }
-                        >
-                          {
-                            responsable.nombre_completo
-                          }
-                        </option>
-                      )
-                    )}
+                    {responsables.map((responsable) => (
+                      <option key={responsable.id} value={responsable.id}>
+                        {responsable.nombre_completo}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
                     <Truck className="size-3.5 text-amber-400/70" />
-
                     Transportista
                   </Label>
 
                   <div className="flex gap-2">
                     <select
-                      className={
-                        selectClass
-                      }
-                      value={
-                        transportistaId
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        setTransportistaId(
-                          event.target
-                            .value
-                        )
+                      className={selectClass}
+                      value={transportistaId}
+                      onChange={(event) =>
+                        setTransportistaId(event.target.value)
                       }
                     >
-                      <option value="">
-                        Seleccionar transportista
-                      </option>
+                      <option value="">Seleccionar transportista</option>
 
-                      {transportistas.map(
-                        (
-                          transportista
-                        ) => (
-                          <option
-                            key={
-                              transportista.id
-                            }
-                            value={
-                              transportista.id
-                            }
-                          >
-                            {
-                              transportista.nombre
-                            }{" "}
-                            {transportista.apellido ===
-                            "-"
-                              ? ""
-                              : transportista.apellido}
-                          </option>
-                        )
-                      )}
+                      {transportistas.map((transportista) => (
+                        <option key={transportista.id} value={transportista.id}>
+                          {transportista.nombre}{" "}
+                          {transportista.apellido === "-"
+                            ? ""
+                            : transportista.apellido}
+                        </option>
+                      ))}
                     </select>
 
                     <Button
                       type="button"
                       variant="outline"
                       className="h-10 shrink-0 border-amber-500/15 bg-amber-500/[0.04] px-3 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
-                      onClick={() =>
-                        setTransportModal(
-                          true
-                        )
-                      }
+                      onClick={() => setTransportModal(true)}
                       title="Agregar transportista"
                     >
                       <Plus className="size-4" />
@@ -1274,7 +838,6 @@ onInput={(event) => {
                 className="h-11 w-full bg-amber-500 text-sm font-semibold text-slate-950 hover:bg-amber-600"
               >
                 <ScanLine className="size-4" />
-
                 Procesar escaneo
               </Button>
 
@@ -1282,13 +845,10 @@ onInput={(event) => {
                 type="button"
                 variant="outline"
                 disabled={loading}
-                onClick={() =>
-                  setCancelOrderModal(true)
-                }
+                onClick={() => setCancelOrderModal(true)}
                 className="h-11 w-full border-red-400/20 bg-red-400/[0.045] text-sm font-medium text-red-300 hover:bg-red-400/10 hover:text-red-200"
               >
                 <AlertTriangle className="size-4" />
-
                 Pedido cancelado
               </Button>
             </div>
@@ -1319,40 +879,21 @@ onInput={(event) => {
               </Label>
 
               <select
-                className={
-                  selectClass
-                }
+                className={selectClass}
                 value={companiaId}
-                onChange={(
-                  event
-                ) => {
-                  setCompaniaId(
-                    event.target.value
-                  );
+                onChange={(event) => {
+                  setCompaniaId(event.target.value);
 
                   setRutaId("");
                 }}
               >
-                <option value="">
-                  Seleccionar compañía
-                </option>
+                <option value="">Seleccionar compañía</option>
 
-                {companias.map(
-                  (compania) => (
-                    <option
-                      key={
-                        compania.id
-                      }
-                      value={
-                        compania.id
-                      }
-                    >
-                      {
-                        compania.nombre
-                      }
-                    </option>
-                  )
-                )}
+                {companias.map((compania) => (
+                  <option key={compania.id} value={compania.id}>
+                    {compania.nombre}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -1367,35 +908,22 @@ onInput={(event) => {
                 </div>
               ) : (
                 <div className="mt-2 grid grid-cols-7 gap-2 2xl:grid-cols-10">
-                  {rutas.map(
-                    (ruta) => (
-                      <button
-                        key={
-                          ruta.id
-                        }
-                        type="button"
-                        onClick={() =>
-                          setRutaId(
-                            ruta.id
-                          )
-                        }
-                        className={[
-                          "h-9 rounded-lg border text-xs font-semibold transition",
+                  {rutas.map((ruta) => (
+                    <button
+                      key={ruta.id}
+                      type="button"
+                      onClick={() => setRutaId(ruta.id)}
+                      className={[
+                        "h-9 rounded-lg border text-xs font-semibold transition",
 
-                          rutaId ===
-                          ruta.id
-                            ? "border-amber-400/50 bg-amber-500 text-slate-950 shadow-[0_0_18px_rgba(245,158,11,.15)]"
-                            : "border-white/8 bg-[#07111F]/75 text-slate-400 hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-300",
-                        ].join(
-                          " "
-                        )}
-                      >
-                        {
-                          ruta.numero
-                        }
-                      </button>
-                    )
-                  )}
+                        rutaId === ruta.id
+                          ? "border-amber-400/50 bg-amber-500 text-slate-950 shadow-[0_0_18px_rgba(245,158,11,.15)]"
+                          : "border-white/8 bg-[#07111F]/75 text-slate-400 hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-300",
+                      ].join(" ")}
+                    >
+                      {ruta.numero}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -1429,9 +957,7 @@ onInput={(event) => {
         />
       </section>
 
-      <FloatingMetrics
-        data={kpis}
-      />
+      <FloatingMetrics data={kpis} />
 
       <CancelOrderDialog
         open={cancelOrderModal}
@@ -1458,74 +984,51 @@ onInput={(event) => {
       />
 
       <AppDialog
-        open={
-          missingFields.length >
-          0
-        }
+        open={missingFields.length > 0}
         tone="warning"
         title="Información incompleta"
         description={
-          missingFields.length ===
-          1
+          missingFields.length === 1
             ? "Falta un dato necesario para completar la operación."
             : "Faltan datos necesarios para completar la operación."
         }
         onClose={() => {
-          setMissingFields(
-            []
-          );
+          setMissingFields([]);
 
           focusScanner();
         }}
       >
         <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] p-3">
-          <p className="mb-2 text-xs text-slate-400">
-            Complete:
-          </p>
+          <p className="mb-2 text-xs text-slate-400">Complete:</p>
 
           <ul className="space-y-1 text-sm text-slate-200">
-            {missingFields.map(
-              (field) => (
-                <li key={field}>
-                  • {field}
-                </li>
-              )
-            )}
+            {missingFields.map((field) => (
+              <li key={field}>• {field}</li>
+            ))}
           </ul>
         </div>
       </AppDialog>
 
       <AppDialog
-        open={
-          confirm?.kind ===
-          "DELETE"
-        }
+        open={confirm?.kind === "DELETE"}
         tone="danger"
         title="Eliminar registro"
         description={
-          confirm?.kind ===
-          "DELETE"
+          confirm?.kind === "DELETE"
             ? `Factura ${confirm.row.factura} · ${confirm.row.estado}`
             : undefined
         }
         confirmLabel="Eliminar"
         loading={loading}
         confirmDisabled={
-          confirm?.kind ===
-            "DELETE" &&
-          confirm.row.estado !==
-            "ATENDIENDO" &&
+          confirm?.kind === "DELETE" &&
+          confirm.row.estado !== "ATENDIENDO" &&
           role === "ADMIN" &&
           !deleteReason.trim()
         }
         onConfirm={() => {
-          if (
-            confirm?.kind ===
-            "DELETE"
-          ) {
-            return executeDelete(
-              confirm.row
-            );
+          if (confirm?.kind === "DELETE") {
+            return executeDelete(confirm.row);
           }
         }}
         onClose={() => {
@@ -1534,10 +1037,8 @@ onInput={(event) => {
           setDeleteReason("");
         }}
       >
-        {confirm?.kind ===
-          "DELETE" &&
-        confirm.row.estado !==
-          "ATENDIENDO" &&
+        {confirm?.kind === "DELETE" &&
+        confirm.row.estado !== "ATENDIENDO" &&
         role === "ADMIN" ? (
           <div className="space-y-2">
             <Label className="text-xs text-slate-300">
@@ -1545,17 +1046,8 @@ onInput={(event) => {
             </Label>
 
             <Textarea
-              value={
-                deleteReason
-              }
-              onChange={(
-                event
-              ) =>
-                setDeleteReason(
-                  event.target
-                    .value
-                )
-              }
+              value={deleteReason}
+              onChange={(event) => setDeleteReason(event.target.value)}
               className="border-white/10 bg-white/[0.04] text-slate-100"
               rows={3}
               placeholder="Explique el motivo administrativo"
@@ -1569,19 +1061,10 @@ onInput={(event) => {
       </AppDialog>
 
       <AppDialog
-        open={
-          Boolean(
-            errorDialog
-          )
-        }
+        open={Boolean(errorDialog)}
         tone="warning"
-        title={
-          errorDialog?.title ??
-          "No se pudo completar"
-        }
-        description={
-          errorDialog?.message
-        }
+        title={errorDialog?.title ?? "No se pudo completar"}
+        description={errorDialog?.message}
         onClose={() => {
           setErrorDialog(null);
 
@@ -1592,24 +1075,14 @@ onInput={(event) => {
       <EditDispatchModal
         row={editRow}
         role={role}
-        onClose={() =>
-          setEditRow(null)
-        }
-        onSaved={
-          refreshRows
-        }
+        onClose={() => setEditRow(null)}
+        onSaved={refreshRows}
       />
 
       <CreateTransportistaModal
         open={transportModal}
-        onClose={() =>
-          setTransportModal(
-            false
-          )
-        }
-        onCreated={
-          refreshTransportistas
-        }
+        onClose={() => setTransportModal(false)}
+        onCreated={refreshTransportistas}
       />
     </div>
   );

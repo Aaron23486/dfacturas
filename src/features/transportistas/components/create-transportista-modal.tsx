@@ -55,7 +55,7 @@ export function CreateTransportistaModal({
       setError(
         cause instanceof Error
           ? cause.message
-          : "No se pudo crear el transportista."
+          : "No se pudo crear el transportista.",
       );
     } finally {
       setLoading(false);
@@ -75,9 +75,7 @@ export function CreateTransportistaModal({
     >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Nombre completo
-          </Label>
+          <Label className="text-xs text-slate-300">Nombre completo</Label>
           <Input
             value={nombreCompleto}
             onChange={(event) => setNombreCompleto(event.target.value)}
@@ -87,14 +85,10 @@ export function CreateTransportistaModal({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-300">
-            Placa
-          </Label>
+          <Label className="text-xs text-slate-300">Placa</Label>
           <Input
             value={placa}
-            onChange={(event) =>
-              setPlaca(event.target.value.toUpperCase())
-            }
+            onChange={(event) => setPlaca(event.target.value.toUpperCase())}
             className="border-white/10 bg-white/[0.04] text-slate-100"
           />
         </div>

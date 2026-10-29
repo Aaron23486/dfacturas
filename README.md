@@ -1,4 +1,5 @@
 # DFacturas
+
 <!-- portfolio-badges-start -->
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.8-black?logo=nextdotjs)
@@ -42,6 +43,7 @@ Administrative users manage companies and their associated routes through a focu
 ![DFacturas company and route configuration](docs/images/dfacturas-configuration.png)
 
 <!-- product-preview-end -->
+
 ## Highlights
 
 - 20-digit invoice scanning workflow: first scan starts a dispatch, second scan finalizes it.
@@ -59,16 +61,17 @@ Administrative users manage companies and their associated routes through a focu
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Framework | Next.js 16.3.8 (App Router) |
-| UI | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts |
-| Language | TypeScript 5.9 |
-| Validation | Zod 4 |
-| Auth / Data | Supabase Auth + PostgreSQL |
+| Layer             | Technology                                                |
+| ----------------- | --------------------------------------------------------- |
+| Framework         | Next.js 16.3.8 (App Router)                               |
+| UI                | React 19.2.8, Tailwind CSS 4, Base UI, Lucide, Recharts   |
+| Language          | TypeScript 5.9                                            |
+| Validation        | Zod 4                                                     |
+| Auth / Data       | Supabase Auth + PostgreSQL                                |
 | Database security | RLS, grants, security-definer RPCs, constraints, triggers |
-| Testing | Vitest 5 |
-| Deployment | Optional; Vercel-compatible with Supabase |
+| Testing           | Vitest 5                                                  |
+| Deployment        | Optional; Vercel-compatible with Supabase                 |
+
 ## Functional modules
 
 The main navigation exposes five operational modules:
@@ -269,10 +272,10 @@ Replace the example email with the user created in your own Supabase project.
 
 ### Roles
 
-| Role | Access |
-| --- | --- |
-| `OPERATIVO` | Authorized dispatch operations |
-| `ADMIN` | Operations plus dashboard, catalogs, configuration, audit and administrative functions |
+| Role        | Access                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------- |
+| `OPERATIVO` | Authorized dispatch operations                                                         |
+| `ADMIN`     | Operations plus dashboard, catalogs, configuration, audit and administrative functions |
 
 ### Credential policy
 

@@ -1,11 +1,9 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { Dispatch } from "./dispatch.types";
 import { resolveDispatchScan } from "./scan.rules";
 
-function createDispatch(
-  overrides: Partial<Dispatch> = {},
-): Dispatch {
+function createDispatch(overrides: Partial<Dispatch> = {}): Dispatch {
   return {
     id: "00000000-0000-0000-0000-000000000001",
     factura: "12345678901234567890",
@@ -59,9 +57,7 @@ describe("resolveDispatchScan", () => {
       estado: "DESPACHADA",
     });
 
-    expect(resolveDispatchScan(dispatch).kind).toBe(
-      "ALREADY_DISPATCHED",
-    );
+    expect(resolveDispatchScan(dispatch).kind).toBe("ALREADY_DISPATCHED");
   });
 
   it("bloquea una factura PEDIDO_CANCELADO", () => {

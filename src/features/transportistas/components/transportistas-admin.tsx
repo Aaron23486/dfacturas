@@ -16,18 +16,18 @@ import type { UserRole } from "@/types/auth";
 
 import { TransportistaModal } from "./transportista-modal";
 
-export function TransportistasAdmin({
-  role,
-}: {
-  role: UserRole;
-}) {
+export function TransportistasAdmin({ role }: { role: UserRole }) {
   const isAdmin = role === "ADMIN";
 
   const [rows, setRows] = useState<TransportistaPlacaRow[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TransportistaPlacaRow | null>(null);
-  const [confirmRow, setConfirmRow] = useState<TransportistaPlacaRow | null>(null);
-  const [toggleRow, setToggleRow] = useState<TransportistaPlacaRow | null>(null);
+  const [confirmRow, setConfirmRow] = useState<TransportistaPlacaRow | null>(
+    null,
+  );
+  const [toggleRow, setToggleRow] = useState<TransportistaPlacaRow | null>(
+    null,
+  );
   const [permissionDialog, setPermissionDialog] = useState(false);
   const [feedback, setFeedback] = useState<{
     title: string;
@@ -183,7 +183,7 @@ export function TransportistasAdmin({
                 </td>
                 <td className="p-3 text-slate-500">
                   {formatDate(
-                    row.vehiculo_created_at ?? row.transportista_created_at
+                    row.vehiculo_created_at ?? row.transportista_created_at,
                   )}
                 </td>
                 <td className="p-3">
@@ -217,7 +217,9 @@ export function TransportistasAdmin({
                       size="sm"
                       variant="outline"
                       className="h-8 w-8 border-amber-400/15 bg-amber-400/[0.03] p-0 text-amber-300 hover:bg-amber-400/10"
-                      title={row.transportista_activo ? "Desactivar" : "Activar"}
+                      title={
+                        row.transportista_activo ? "Desactivar" : "Activar"
+                      }
                       onClick={() => adminOnly(() => setToggleRow(row))}
                     >
                       <Power className="size-3.5" />
@@ -272,7 +274,9 @@ export function TransportistasAdmin({
             ? `${toggleRow.nombre_completo} · ${toggleRow.placa ?? "-"}`
             : undefined
         }
-        confirmLabel={toggleRow?.transportista_activo ? "Desactivar" : "Activar"}
+        confirmLabel={
+          toggleRow?.transportista_activo ? "Desactivar" : "Activar"
+        }
         loading={loading}
         onConfirm={toggle}
         onClose={() => setToggleRow(null)}
