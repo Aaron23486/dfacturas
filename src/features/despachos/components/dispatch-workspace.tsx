@@ -9,48 +9,23 @@ import {
   useState,
 } from "react";
 
-import {
-  AlertTriangle,
-  Building2,
-  Plus,
-  RotateCcw,
-  ScanLine,
-  Truck,
-  UserRound,
-} from "lucide-react";
-
 import { AppDialog } from "@/components/app/app-dialog";
-
-import { Button } from "@/components/ui/button";
-
-import { Input } from "@/components/ui/input";
-
-import { Label } from "@/components/ui/label";
-
-import { Textarea } from "@/components/ui/textarea";
-
+import { isValidInvoice } from "@/domain/dispatch/invoice.rules";
+import { FloatingMetrics } from "@/features/metrics/components/floating-metrics";
+import { CreateTransportistaModal } from "@/features/transportistas/components/create-transportista-modal";
 import {
   listCompaniasActivas,
   listResponsablesActivos,
   listRutasByCompania,
   listTransportistasActivos,
 } from "@/services/catalog.service";
-
-import { INVOICE_LENGTH } from "@/domain/dispatch/dispatch.constants";
-import {
-  isValidInvoice,
-  sanitizeInvoiceInput,
-} from "@/domain/dispatch/invoice.rules";
-
 import { deleteDispatch, listDispatches } from "@/services/dispatch.service";
-
 import {
   inspectFacturaScan,
   processFacturaScan,
 } from "@/services/scan.service";
-
 import { getVehicleByTransportista } from "@/services/vehicle.service";
-
+import type { UserRole } from "@/types/auth";
 import type {
   Compania,
   Responsable,
@@ -58,129 +33,51 @@ import type {
   Transportista,
   Vehiculo,
 } from "@/types/catalog";
-
-import type { DailyKpis, DispatchListItem } from "@/types/dispatch";
-
-import type { UserRole } from "@/types/auth";
-
+import type { DispatchListItem } from "@/types/dispatch";
 import type { ProcessScanResult, ScanDispatchContext } from "@/types/scan";
 
-import { createClient } from "@/lib/supabase/client";
-
-import { durationMinutes } from "@/lib/utils/date";
-
-import { DispatchTable } from "./dispatch-table";
-
-import { EditDispatchModal } from "./edit-dispatch-modal";
-
-import { ScanResultDialog } from "./scan-result-dialog";
-
-import { CreateTransportistaModal } from "@/features/transportistas/components/create-transportista-modal";
-
+import {
+  calculateKpis,
+  DISPATCH_CONTEXT_STORAGE_KEY,
+  EMPTY_CONTEXT,
+  isClienteRetira,
+  missingDispatchFields,
+  parsePersistedContext,
+} from "../domain/workspace";
+import {
+  HISTORY_LIMIT,
+  useDispatchHistory,
+} from "../hooks/use-dispatch-history";
 import { CancelOrderDialog } from "./cancel-order-dialog";
+import { CompanyRouteCard } from "./company-route-card";
+import { DispatchTable } from "./dispatch-table";
+import { EditDispatchModal } from "./edit-dispatch-modal";
+import { ScanFormCard } from "./scan-form-card";
+import { ScanResultDialog } from "./scan-result-dialog";
+import {
+  DeleteDispatchDialog,
+  MissingFieldsDialog,
+  needsDeleteReason,
+} from "./workspace-dialogs";
 
-import { FloatingMetrics } from "@/features/metrics/components/floating-metrics";
+type BlockedScan = Extract<
+  ProcessScanResult,
+  { kind: "BLOCKED_CANCELLED" | "BLOCKED_ALREADY_DISPATCHED" }
+>;
 
-interface PersistedContext {
-  responsableId: string;
-  companiaId: string;
-  rutaId: string;
-  transportistaId: string;
+function isBlocked(result: ProcessScanResult): result is BlockedScan {
+  return (
+    result.kind === "BLOCKED_CANCELLED" ||
+    result.kind === "BLOCKED_ALREADY_DISPATCHED"
+  );
 }
 
-type ConfirmState = {
-  kind: "DELETE";
-  row: DispatchListItem;
-} | null;
-
-const STORAGE_KEY = "facturacion-v2:dispatch-context";
-
-const NOOP_FINALIZE = async () => {};
-
-function isClienteRetira(transportista: Transportista | null | undefined) {
-  return transportista?.nombre.trim().toUpperCase() === "CLIENTE RETIRA";
+function errorMessage(cause: unknown, fallback: string) {
+  return cause instanceof Error ? cause.message : fallback;
 }
 
-const EMPTY_CONTEXT: PersistedContext = {
-  responsableId: "",
-  companiaId: "",
-  rutaId: "",
-  transportistaId: "",
-};
-
-function readPersisted(): PersistedContext {
-  try {
-    return JSON.parse(
-      localStorage.getItem(STORAGE_KEY) ?? "",
-    ) as PersistedContext;
-  } catch {
-    return EMPTY_CONTEXT;
-  }
-}
-
-function calculateKpis(rows: DispatchListItem[]): DailyKpis {
-  const now = new Date();
-
-  const isToday = (value: string | null) => {
-    if (!value) {
-      return false;
-    }
-
-    const date = new Date(value);
-
-    return (
-      date.getFullYear() === now.getFullYear() &&
-      date.getMonth() === now.getMonth() &&
-      date.getDate() === now.getDate()
-    );
-  };
-
-  const todayRows = rows.filter((row) => isToday(row.created_at));
-
-  const dispatched = todayRows.filter((row) => row.estado === "DESPACHADA");
-
-  const durations = dispatched
-    .map((row) => durationMinutes(row.fecha_hora_inicio, row.fecha_hora_final))
-    .filter((value): value is number => value !== null);
-
-  const counts = new Map<string, number>();
-
-  // El ranking operativo representa exclusivamente despachos finalizados.
-  // PEDIDO_CANCELADO y ATENDIENDO no deben sumar al Top 1/2/3.
-  for (const row of dispatched) {
-    if (!row.responsable_nombre) {
-      continue;
-    }
-
-    counts.set(
-      row.responsable_nombre,
-      (counts.get(row.responsable_nombre) ?? 0) + 1,
-    );
-  }
-
-  return {
-    despachadas: dispatched.length,
-
-    atendiendo: todayRows.filter((row) => row.estado === "ATENDIENDO").length,
-
-    finalizadas: dispatched.length,
-
-    promedioMinutos: durations.length
-      ? Math.round(
-          durations.reduce((sum, value) => sum + value, 0) / durations.length,
-        )
-      : 0,
-
-    top: [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([nombre, total]) => ({
-        nombre,
-        total,
-      })),
-  };
-}
-
+// Pantalla de despacho: guarda el estado del escaneo y coordina el formulario, la compañía y
+// la ruta, el historial en tiempo real y los diálogos.
 export function DispatchWorkspace({
   userId,
   role,
@@ -191,65 +88,39 @@ export function DispatchWorkspace({
   const facturaRef = useRef<HTMLInputElement>(null);
 
   const [factura, setFactura] = useState("");
-
   const [detalle, setDetalle] = useState("");
 
   const [responsables, setResponsables] = useState<Responsable[]>([]);
-
   const [companias, setCompanias] = useState<Compania[]>([]);
-
   const [rutas, setRutas] = useState<Ruta[]>([]);
-
   const [transportistas, setTransportistas] = useState<Transportista[]>([]);
 
   const [responsableId, setResponsableId] = useState("");
-
   const [companiaId, setCompaniaId] = useState("");
-
   const [rutaId, setRutaId] = useState("");
-
   const [transportistaId, setTransportistaId] = useState("");
-
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
 
   const selectedTransportista = useMemo(
     () => transportistas.find((item) => item.id === transportistaId) ?? null,
     [transportistas, transportistaId],
   );
-
   const clienteRetiraSeleccionado = isClienteRetira(selectedTransportista);
 
-  const [rows, setRows] = useState<DispatchListItem[]>([]);
+  const { rows, setRows, refreshRows } = useDispatchHistory();
 
-  const [scanResult, setScanResult] = useState<Extract<
-    ProcessScanResult,
-    {
-      kind: "BLOCKED_CANCELLED" | "BLOCKED_ALREADY_DISPATCHED";
-    }
-  > | null>(null);
-
-  const [confirm, setConfirm] = useState<ConfirmState>(null);
-
+  const [scanResult, setScanResult] = useState<BlockedScan | null>(null);
+  const [deleteRow, setDeleteRow] = useState<DispatchListItem | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
-
   const [missingFields, setMissingFields] = useState<string[]>([]);
-
   const [errorDialog, setErrorDialog] = useState<{
     title: string;
     message: string;
   } | null>(null);
-
   const [editRow, setEditRow] = useState<DispatchListItem | null>(null);
-
   const [transportModal, setTransportModal] = useState(false);
-
   const [cancelOrderModal, setCancelOrderModal] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
-  const refreshRows = useCallback(async () => {
-    setRows(await listDispatches(300));
-  }, []);
 
   const refreshTransportistas = useCallback(async () => {
     setTransportistas(await listTransportistasActivos());
@@ -257,11 +128,7 @@ export function DispatchWorkspace({
 
   const requestDelete = useCallback(async (row: DispatchListItem) => {
     setDeleteReason("");
-
-    setConfirm({
-      kind: "DELETE",
-      row,
-    });
+    setDeleteRow(row);
   }, []);
 
   const requestEdit = useCallback((row: DispatchListItem) => {
@@ -269,13 +136,15 @@ export function DispatchWorkspace({
   }, []);
 
   useEffect(() => {
-    const persisted = readPersisted();
+    const persisted = parsePersistedContext(
+      localStorage.getItem(DISPATCH_CONTEXT_STORAGE_KEY),
+    );
 
     void Promise.all([
       listResponsablesActivos(),
       listCompaniasActivas(),
       listTransportistasActivos(),
-      listDispatches(300),
+      listDispatches(HISTORY_LIMIT),
     ])
       .then(
         ([
@@ -285,35 +154,24 @@ export function DispatchWorkspace({
           dispatchesData,
         ]) => {
           setResponsables(responsablesData);
-
           setCompanias(companiasData);
-
           setTransportistas(transportistasData);
-
           setRows(dispatchesData);
-
           setResponsableId(persisted.responsableId);
-
           setCompaniaId(persisted.companiaId);
-
           setRutaId(persisted.rutaId);
-
           setTransportistaId(persisted.transportistaId);
         },
       )
       .catch((cause) => {
         setErrorDialog({
           title: "No se pudo cargar la vista",
-
-          message:
-            cause instanceof Error
-              ? cause.message
-              : "Ocurrió un error al cargar los datos.",
+          message: errorMessage(cause, "Ocurrió un error al cargar los datos."),
         });
       });
 
     facturaRef.current?.focus();
-  }, []);
+  }, [setRows]);
 
   useEffect(() => {
     if (!companiaId) {
@@ -329,7 +187,6 @@ export function DispatchWorkspace({
       .catch(() => {
         setErrorDialog({
           title: "No se pudieron cargar las rutas",
-
           message: "Intente seleccionar nuevamente la compañía.",
         });
       });
@@ -353,36 +210,10 @@ export function DispatchWorkspace({
 
   useEffect(() => {
     localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        responsableId,
-        companiaId,
-        rutaId,
-        transportistaId,
-      }),
+      DISPATCH_CONTEXT_STORAGE_KEY,
+      JSON.stringify({ responsableId, companiaId, rutaId, transportistaId }),
     );
   }, [responsableId, companiaId, rutaId, transportistaId]);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel("despachos-live")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "despachos",
-        },
-        () => void refreshRows(),
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [refreshRows]);
 
   const kpis = useMemo(() => calculateKpis(rows), [rows]);
 
@@ -407,14 +238,17 @@ export function DispatchWorkspace({
     setRutas([]);
     setMissingFields([]);
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(EMPTY_CONTEXT));
+    localStorage.setItem(
+      DISPATCH_CONTEXT_STORAGE_KEY,
+      JSON.stringify(EMPTY_CONTEXT),
+    );
 
     focusScanner();
   }
 
+  // En el segundo escaneo, la pantalla muestra el contexto con el que se inició el despacho.
   async function hydrateDispatchContext(dispatch: ScanDispatchContext) {
     setResponsableId(dispatch.responsable_id ?? "");
-
     setTransportistaId(dispatch.transportista_id ?? "");
 
     if (dispatch.vehiculo_id && dispatch.transportista_id && dispatch.placa) {
@@ -454,32 +288,7 @@ export function DispatchWorkspace({
     );
   }
 
-  function getMissingFields(includeFactura = true) {
-    const missing: string[] = [];
-
-    if (includeFactura && !factura.trim()) {
-      missing.push("Factura");
-    }
-
-    if (!responsableId) {
-      missing.push("Responsable");
-    }
-
-    if (!transportistaId) {
-      missing.push("Transportista");
-    }
-
-    if (!companiaId) {
-      missing.push("Compañía");
-    }
-
-    if (!rutaId) {
-      missing.push("Ruta");
-    }
-
-    return missing;
-  }
-
+  // undefined: error de validación ya mostrado. null: válido sin placa (CLIENTE RETIRA).
   async function resolveVehicleId(): Promise<string | null | undefined> {
     if (!transportistaId) {
       return null;
@@ -498,13 +307,9 @@ export function DispatchWorkspace({
     if (!vehicle) {
       setErrorDialog({
         title: "Transportista sin placa",
-
         message:
           "El transportista seleccionado no tiene una placa activa asociada. Corrija el registro antes de continuar.",
       });
-
-      // undefined significa error de validación. null está reservado
-      // para el caso válido CLIENTE RETIRA sin placa.
       return undefined;
     }
 
@@ -544,30 +349,24 @@ export function DispatchWorkspace({
         ? await processFacturaScan(factura.trim(), null, existingContext)
         : null;
 
-      if (current) {
-        if (
-          current.kind === "BLOCKED_CANCELLED" ||
-          current.kind === "BLOCKED_ALREADY_DISPATCHED"
-        ) {
-          setScanResult(current);
-
-          return;
-        }
-
-        if (current.kind === "FINALIZED") {
-          resetScan();
-
-          await refreshRows();
-
-          return;
-        }
+      if (current && isBlocked(current)) {
+        setScanResult(current);
+        return;
       }
 
-      const missing = getMissingFields(false);
+      if (current?.kind === "FINALIZED") {
+        resetScan();
+        await refreshRows();
+        return;
+      }
+
+      const missing = missingDispatchFields(
+        { factura, responsableId, transportistaId, companiaId, rutaId },
+        false,
+      );
 
       if (missing.length > 0) {
         setMissingFields(missing);
-
         return;
       }
 
@@ -581,49 +380,45 @@ export function DispatchWorkspace({
         factura.trim(),
         {
           factura: factura.trim(),
-
           responsableId,
           companiaId,
           rutaId,
           transportistaId,
-
           vehiculoId: vehicleId,
-
           detalle: detalle.trim() || null,
         },
         null,
       );
 
-      if (
-        result.kind === "BLOCKED_CANCELLED" ||
-        result.kind === "BLOCKED_ALREADY_DISPATCHED"
-      ) {
+      if (isBlocked(result)) {
         setScanResult(result);
-
         return;
       }
 
       resetScan();
-
       await refreshRows();
     } catch (cause) {
       setErrorDialog({
         title: "No se pudo procesar la factura",
-
-        message:
-          cause instanceof Error
-            ? cause.message
-            : "Ocurrió un error al procesar el escaneo.",
+        message: errorMessage(
+          cause,
+          "Ocurrió un error al procesar el escaneo.",
+        ),
       });
     } finally {
       setLoading(false);
     }
   }
 
+  function closeDeleteDialog() {
+    setDeleteRow(null);
+    setDeleteReason("");
+  }
+
   async function executeDelete(row: DispatchListItem) {
     const protectedState = row.estado !== "ATENDIENDO";
 
-    if (protectedState && role === "ADMIN" && !deleteReason.trim()) {
+    if (needsDeleteReason(row, role) && !deleteReason.trim()) {
       return;
     }
 
@@ -632,321 +427,56 @@ export function DispatchWorkspace({
     try {
       await deleteDispatch(
         row.id,
-
         protectedState ? deleteReason.trim() : undefined,
       );
-
-      setConfirm(null);
-
-      setDeleteReason("");
-
+      closeDeleteDialog();
       await refreshRows();
-
       focusScanner();
     } catch (cause) {
-      setConfirm(null);
-
-      setDeleteReason("");
-
+      closeDeleteDialog();
       setErrorDialog({
         title: "No se pudo eliminar el registro",
-
-        message:
-          cause instanceof Error
-            ? cause.message
-            : "La operación no pudo completarse.",
+        message: errorMessage(cause, "La operación no pudo completarse."),
       });
     } finally {
       setLoading(false);
     }
   }
 
-  const selectClass =
-    "h-10 w-full rounded-lg border border-white/10 bg-[#07111F]/90 px-3 text-sm text-slate-100 outline-none transition focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10";
-
   return (
     <div className="flex min-h-0 flex-col gap-3">
       <section className="grid gap-3 xl:grid-cols-[0.94fr_1.06fr]">
-        <div className="rounded-2xl border border-white/8 bg-[#0B1626]/74 p-4 shadow-[0_16px_50px_rgba(0,0,0,.2)] backdrop-blur-xl">
-          <div className="mb-3 flex min-h-9 items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="grid size-8 place-items-center rounded-lg border border-amber-500/15 bg-amber-500/[0.06] text-amber-400">
-                <ScanLine className="size-4" />
-              </div>
+        <ScanFormCard
+          facturaRef={facturaRef}
+          factura={factura}
+          onFacturaChange={setFactura}
+          detalle={detalle}
+          onDetalleChange={setDetalle}
+          responsables={responsables}
+          responsableId={responsableId}
+          onResponsableChange={setResponsableId}
+          transportistas={transportistas}
+          transportistaId={transportistaId}
+          onTransportistaChange={setTransportistaId}
+          selectedVehicle={selectedVehicle}
+          loading={loading}
+          onSubmit={register}
+          onClear={clearOperationalContext}
+          onAddTransportista={() => setTransportModal(true)}
+          onCancelOrder={() => setCancelOrderModal(true)}
+        />
 
-              <div>
-                <h2 className="text-sm font-semibold text-slate-200">
-                  Escaneo y operación
-                </h2>
-
-                <p className="text-[11px] text-slate-400">
-                  Primer escaneo inicia. Segundo escaneo finaliza.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              {selectedVehicle ? (
-                <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/15 bg-amber-500/[0.045] px-3 py-1.5 text-xs text-slate-400">
-                  <Truck className="size-3.5 text-amber-400" />
-                  Placa
-                  <span className="font-semibold text-amber-300">
-                    {selectedVehicle.placa}
-                  </span>
-                </div>
-              ) : null}
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={clearOperationalContext}
-                className="h-8 shrink-0 border-amber-500/15 bg-amber-500/[0.04] px-2.5 text-xs text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
-                title="Limpiar selección actual"
-              >
-                <RotateCcw className="size-3.5" />
-                Limpiar
-              </Button>
-            </div>
-          </div>
-
-          <form onSubmit={register} className="grid gap-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="grid content-start gap-3">
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="dispatch-factura"
-                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
-                  >
-                    <ScanLine className="size-3.5 text-amber-400/70" />
-                    Factura
-                  </Label>
-
-                  <Input
-                    id="dispatch-factura"
-                    ref={facturaRef}
-                    value={factura}
-                    onChange={(event) =>
-                      setFactura(sanitizeInvoiceInput(event.target.value))
-                    }
-
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={INVOICE_LENGTH}
-                    pattern="[0-9]{20}"
-                    placeholder="Escanee la factura"
-                    autoComplete="off"
-                    className="h-11 border-amber-500/20 bg-[#07111F] text-base text-slate-100 placeholder:text-sm placeholder:text-slate-700 focus-visible:border-amber-500/60 focus-visible:ring-amber-500/10"
-                    onInvalid={(event) => {
-                      event.currentTarget.setCustomValidity(
-                        "Debe contener 20 números y sin letras.",
-                      );
-                    }}
-                    onInput={(event) => {
-                      event.currentTarget.setCustomValidity("");
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="dispatch-detalle"
-                    className="text-[11px] font-medium text-slate-400"
-                  >
-                    Detalle
-                  </Label>
-
-                  <Textarea
-                    id="dispatch-detalle"
-                    value={detalle}
-                    onChange={(event) => setDetalle(event.target.value)}
-                    rows={3}
-                    className="min-h-[84px] resize-none border-white/10 bg-[#07111F]/90 text-sm text-slate-100 placeholder:text-slate-700 focus-visible:border-amber-500/35"
-                    placeholder="Detalle opcional"
-                  />
-                </div>
-              </div>
-
-              <div className="grid content-start gap-3">
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="dispatch-responsable"
-                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
-                  >
-                    <UserRound className="size-3.5 text-amber-400/70" />
-                    Responsable
-                  </Label>
-
-                  <select
-                    id="dispatch-responsable"
-                    className={selectClass}
-                    value={responsableId}
-                    onChange={(event) => setResponsableId(event.target.value)}
-                  >
-                    <option value="">Seleccionar responsable</option>
-
-                    {responsables.map((responsable) => (
-                      <option key={responsable.id} value={responsable.id}>
-                        {responsable.nombre_completo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="dispatch-transportista"
-                    className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400"
-                  >
-                    <Truck className="size-3.5 text-amber-400/70" />
-                    Transportista
-                  </Label>
-
-                  <div className="flex gap-2">
-                    <select
-                      id="dispatch-transportista"
-                      className={selectClass}
-                      value={transportistaId}
-                      onChange={(event) =>
-                        setTransportistaId(event.target.value)
-                      }
-                    >
-                      <option value="">Seleccionar transportista</option>
-
-                      {transportistas.map((transportista) => (
-                        <option key={transportista.id} value={transportista.id}>
-                          {transportista.nombre}{" "}
-                          {transportista.apellido === "-"
-                            ? ""
-                            : transportista.apellido}
-                        </option>
-                      ))}
-                    </select>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 shrink-0 border-amber-500/15 bg-amber-500/[0.04] px-3 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
-                      onClick={() => setTransportModal(true)}
-                      title="Agregar transportista"
-                      aria-label="Agregar transportista"
-                    >
-                      <Plus className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="h-11 w-full bg-amber-500 text-sm font-semibold text-slate-950 hover:bg-amber-600"
-              >
-                <ScanLine className="size-4" />
-                Procesar escaneo
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading}
-                onClick={() => setCancelOrderModal(true)}
-                className="h-11 w-full border-red-400/20 bg-red-400/[0.045] text-sm font-medium text-red-300 hover:bg-red-400/10 hover:text-red-200"
-              >
-                <AlertTriangle className="size-4" />
-                Pedido cancelado
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        <div className="rounded-2xl border border-white/8 bg-[#0B1626]/74 p-4 shadow-[0_16px_50px_rgba(0,0,0,.2)] backdrop-blur-xl">
-          <div className="mb-3 flex items-center gap-2.5">
-            <div className="grid size-8 place-items-center rounded-lg border border-blue-400/15 bg-blue-400/[0.06] text-blue-300">
-              <Building2 className="size-4" />
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold text-slate-200">
-                Compañía y rutas
-              </h2>
-
-              <p className="text-[11px] text-slate-400">
-                Las rutas dependen de la compañía seleccionada.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="dispatch-compania"
-                className="text-[11px] font-medium text-slate-400"
-              >
-                Compañía
-              </Label>
-
-              <select
-                id="dispatch-compania"
-                className={selectClass}
-                value={companiaId}
-                onChange={(event) => {
-                  setCompaniaId(event.target.value);
-
-                  setRutaId("");
-                }}
-              >
-                <option value="">Seleccionar compañía</option>
-
-                {companias.map((compania) => (
-                  <option key={compania.id} value={compania.id}>
-                    {compania.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <p
-                id="dispatch-ruta"
-                className="text-[11px] font-medium text-slate-400"
-              >
-                Ruta
-              </p>
-
-              {!companiaId ? (
-                <div className="mt-1.5 grid min-h-[94px] place-items-center rounded-xl border border-dashed border-white/8 bg-black/10 text-sm text-slate-400">
-                  Seleccione una compañía
-                </div>
-              ) : (
-                <div
-                  role="group"
-                  aria-labelledby="dispatch-ruta"
-                  className="mt-2 grid grid-cols-7 gap-2 2xl:grid-cols-10"
-                >
-                  {rutas.map((ruta) => (
-                    <button
-                      key={ruta.id}
-                      type="button"
-                      aria-pressed={rutaId === ruta.id}
-                      onClick={() => setRutaId(ruta.id)}
-                      className={[
-                        "h-9 rounded-lg border text-xs font-semibold transition",
-
-                        rutaId === ruta.id
-                          ? "border-amber-400/50 bg-amber-500 text-slate-950 shadow-[0_0_18px_rgba(245,158,11,.15)]"
-                          : "border-white/8 bg-[#07111F]/75 text-slate-400 hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-300",
-                      ].join(" ")}
-                    >
-                      {ruta.numero}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <CompanyRouteCard
+          companias={companias}
+          companiaId={companiaId}
+          onCompaniaChange={(id) => {
+            setCompaniaId(id);
+            setRutaId("");
+          }}
+          rutas={rutas}
+          rutaId={rutaId}
+          onRutaChange={setRutaId}
+        />
       </section>
 
       <section className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/8 bg-[#0B1626]/58 p-3 shadow-[0_16px_50px_rgba(0,0,0,.18)] backdrop-blur-xl">
@@ -969,7 +499,6 @@ export function DispatchWorkspace({
         <DispatchTable
           rows={rows}
           role={role}
-          onFinalize={NOOP_FINALIZE}
           onDelete={requestDelete}
           onEdit={requestEdit}
         />
@@ -996,87 +525,27 @@ export function DispatchWorkspace({
         result={scanResult}
         onClose={() => {
           setScanResult(null);
-
           resetScan();
         }}
       />
 
-      <AppDialog
-        open={missingFields.length > 0}
-        tone="warning"
-        title="Información incompleta"
-        description={
-          missingFields.length === 1
-            ? "Falta un dato necesario para completar la operación."
-            : "Faltan datos necesarios para completar la operación."
-        }
+      <MissingFieldsDialog
+        fields={missingFields}
         onClose={() => {
           setMissingFields([]);
-
           focusScanner();
         }}
-      >
-        <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] p-3">
-          <p className="mb-2 text-xs text-slate-400">Complete:</p>
+      />
 
-          <ul className="space-y-1 text-sm text-slate-200">
-            {missingFields.map((field) => (
-              <li key={field}>• {field}</li>
-            ))}
-          </ul>
-        </div>
-      </AppDialog>
-
-      <AppDialog
-        open={confirm?.kind === "DELETE"}
-        tone="danger"
-        title="Eliminar registro"
-        description={
-          confirm?.kind === "DELETE"
-            ? `Factura ${confirm.row.factura} · ${confirm.row.estado}`
-            : undefined
-        }
-        confirmLabel="Eliminar"
+      <DeleteDispatchDialog
+        row={deleteRow}
+        role={role}
+        reason={deleteReason}
+        onReasonChange={setDeleteReason}
         loading={loading}
-        confirmDisabled={
-          confirm?.kind === "DELETE" &&
-          confirm.row.estado !== "ATENDIENDO" &&
-          role === "ADMIN" &&
-          !deleteReason.trim()
-        }
-        onConfirm={() => {
-          if (confirm?.kind === "DELETE") {
-            return executeDelete(confirm.row);
-          }
-        }}
-        onClose={() => {
-          setConfirm(null);
-
-          setDeleteReason("");
-        }}
-      >
-        {confirm?.kind === "DELETE" &&
-        confirm.row.estado !== "ATENDIENDO" &&
-        role === "ADMIN" ? (
-          <div className="space-y-2">
-            <Label className="text-xs text-slate-300">
-              Motivo de eliminación
-            </Label>
-
-            <Textarea
-              value={deleteReason}
-              onChange={(event) => setDeleteReason(event.target.value)}
-              className="border-white/10 bg-white/[0.04] text-slate-100"
-              rows={3}
-              placeholder="Explique el motivo administrativo"
-            />
-          </div>
-        ) : (
-          <p className="text-xs text-slate-400">
-            Esta acción requiere confirmación.
-          </p>
-        )}
-      </AppDialog>
+        onConfirm={executeDelete}
+        onClose={closeDeleteDialog}
+      />
 
       <AppDialog
         open={Boolean(errorDialog)}
@@ -1085,7 +554,6 @@ export function DispatchWorkspace({
         description={errorDialog?.message}
         onClose={() => {
           setErrorDialog(null);
-
           focusScanner();
         }}
       />

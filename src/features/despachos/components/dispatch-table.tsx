@@ -1,27 +1,10 @@
 "use client";
 
-import {
-  memo,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { memo, useMemo, useState } from "react";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Filter,
-  Pencil,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/app/status-badge";
 
 import { formatDateTime, formatDuration } from "@/lib/utils/date";
@@ -29,303 +12,23 @@ import { formatDateTime, formatDuration } from "@/lib/utils/date";
 import type { DispatchListItem } from "@/types/dispatch";
 import type { UserRole } from "@/types/auth";
 
-type FilterKey =
-  "factura" | "compania" | "ruta" | "estado" | "responsable" | "transportista";
+import {
+  EMPTY_FILTERS,
+  filterAndSortDispatches,
+  type FilterKey,
+  type Filters,
+  type SortState,
+} from "../domain/history";
 
-type Filters = Record<FilterKey, string>;
-
-type SortKey = "iniciada" | "terminada" | "duracion";
-
-type SortDirection = "asc" | "desc";
-
-interface SortState {
-  key: SortKey;
-  direction: SortDirection;
-}
-
-const EMPTY_FILTERS: Filters = {
-  factura: "",
-  compania: "",
-  ruta: "",
-  estado: "",
-  responsable: "",
-  transportista: "",
-};
-
-/*
- * ============================================================
- * IMPORTANTE
- * ============================================================
- *
- * Estos componentes están FUERA de DispatchTable.
- *
- * Esto evita que React los considere componentes nuevos en
- * cada render y remonte el input después de cada letra.
- *
- * Ese era el motivo por el que podías escribir "M" pero luego
- * el campo perdía el foco.
- */
-
-function InlineFilterHeader({
-  label,
-  filterKey,
-  activeFilter,
-  setActiveFilter,
-  filters,
-  setFilters,
-}: {
-  label: string;
-
-  filterKey: FilterKey;
-
-  activeFilter: FilterKey | null;
-
-  setActiveFilter: Dispatch<SetStateAction<FilterKey | null>>;
-
-  filters: Filters;
-
-  setFilters: Dispatch<SetStateAction<Filters>>;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const active = activeFilter === filterKey;
-
-  const value = filters[filterKey];
-
-  const hasValue = value.trim().length > 0;
-
-  function activate() {
-    setActiveFilter(filterKey);
-
-    window.setTimeout(() => {
-      const input = inputRef.current;
-
-      input?.focus();
-
-      if (input) {
-        input.setSelectionRange(input.value.length, input.value.length);
-      }
-    }, 0);
-  }
-
-  function update(value: string) {
-    setFilters((current) => ({
-      ...current,
-
-      [filterKey]: value,
-    }));
-  }
-
-  function clear() {
-    setFilters((current) => ({
-      ...current,
-
-      [filterKey]: "",
-    }));
-
-    window.setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
-  }
-
-  return (
-    <div className="h-8 w-full min-w-0">
-      {active ? (
-        <div
-          className="relative h-8 w-full min-w-0 max-w-full"
-          onClick={(event) => event.stopPropagation()}
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          <Search className="pointer-events-none absolute left-2 top-1/2 z-10 size-3.5 -translate-y-1/2 text-amber-400/85" />
-
-          <Input
-            ref={inputRef}
-            value={value}
-            onChange={(event) => update(event.target.value)}
-            onClick={(event) => event.stopPropagation()}
-            onPointerDown={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              /*
-               * Escape cierra visualmente
-               * el input pero conserva el
-               * filtro escrito.
-               */
-              if (event.key === "Escape") {
-                event.preventDefault();
-
-                setActiveFilter(null);
-              }
-            }}
-            placeholder={label}
-            aria-label={`Filtrar por ${label}`}
-            autoComplete="off"
-            className={[
-              "h-8 w-full min-w-0 max-w-full rounded-md",
-
-              "border-amber-500/20 bg-[#07111F]/95",
-
-              "pl-7 pr-7 text-[11px] font-medium normal-case tracking-normal text-slate-100",
-
-              "placeholder:text-slate-400",
-
-              "focus-visible:border-amber-400/45 focus-visible:ring-1 focus-visible:ring-amber-400/15",
-            ].join(" ")}
-          />
-
-          {hasValue ? (
-            <button
-              type="button"
-              title={`Limpiar ${label}`}
-              aria-label={`Limpiar filtro ${label}`}
-              className="absolute right-1.5 top-1/2 z-20 grid size-5 -translate-y-1/2 place-items-center rounded-md text-slate-400 transition hover:bg-white/[0.06] hover:text-amber-400"
-              onClick={(event) => {
-                event.stopPropagation();
-
-                clear();
-              }}
-              onPointerDown={(event) => event.stopPropagation()}
-            >
-              <X className="size-3" />
-            </button>
-          ) : null}
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={activate}
-          className={[
-            "group flex h-8 w-full min-w-0 cursor-text items-center justify-between gap-1 rounded-md px-2 text-left transition",
-
-            "hover:bg-amber-500/[0.035]",
-
-            hasValue ? "text-amber-400" : "text-slate-400 hover:text-slate-300",
-          ].join(" ")}
-          title={`Filtrar por ${label}`}
-        >
-          <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.06em]">
-            {hasValue ? value : label}
-          </span>
-
-          <span className="relative shrink-0">
-            <Filter
-              className={[
-                "size-3.5 transition",
-
-                hasValue
-                  ? "text-amber-400"
-                  : "text-slate-400 group-hover:text-amber-400/70",
-              ].join(" ")}
-            />
-
-            {hasValue ? (
-              <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,.65)]" />
-            ) : null}
-          </span>
-        </button>
-      )}
-    </div>
-  );
-}
-
-/*
- * ============================================================
- * HEADER DE ORDENAMIENTO
- * ============================================================
- *
- * Primer click:
- * ASC
- *
- * Segundo:
- * DESC
- *
- * Tercero:
- * sin ordenamiento.
- */
-
-function SortableHeader({
-  label,
-  sortKey,
-  sort,
-  setSort,
-}: {
-  label: string;
-
-  sortKey: SortKey;
-
-  sort: SortState | null;
-
-  setSort: Dispatch<SetStateAction<SortState | null>>;
-}) {
-  const active = sort?.key === sortKey;
-
-  const direction = active ? (sort?.direction ?? null) : null;
-
-  function toggle() {
-    setSort((current) => {
-      if (!current || current.key !== sortKey) {
-        return {
-          key: sortKey,
-          direction: "asc",
-        };
-      }
-
-      if (current.direction === "asc") {
-        return {
-          key: sortKey,
-          direction: "desc",
-        };
-      }
-
-      return null;
-    });
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      className={[
-        "group flex h-8 w-full min-w-0 cursor-pointer items-center justify-between gap-1 rounded-md px-2 text-left transition",
-
-        "hover:bg-amber-500/[0.035]",
-
-        active ? "text-amber-400" : "text-slate-400 hover:text-slate-300",
-      ].join(" ")}
-      title={
-        !active
-          ? `Ordenar ${label} de forma ascendente`
-          : direction === "asc"
-            ? `Ordenar ${label} de forma descendente`
-            : `Quitar ordenamiento de ${label}`
-      }
-    >
-      <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.06em]">
-        {label}
-      </span>
-
-      {!active ? (
-        <ArrowUpDown className="size-3.5 shrink-0 text-slate-400 transition group-hover:text-amber-400/70" />
-      ) : direction === "asc" ? (
-        <ArrowUp className="size-3.5 shrink-0 text-amber-400" />
-      ) : (
-        <ArrowDown className="size-3.5 shrink-0 text-amber-400" />
-      )}
-    </button>
-  );
-}
-
-function StaticHeader({ children }: { children: string }) {
-  return (
-    <div className="flex h-8 items-center px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-400">
-      {children}
-    </div>
-  );
-}
+import {
+  InlineFilterHeader,
+  SortableHeader,
+  StaticHeader,
+} from "./history-headers";
 
 function DispatchTableComponent({
   rows,
   role,
-  onFinalize,
   onDelete,
   onEdit,
 }: {
@@ -333,148 +36,20 @@ function DispatchTableComponent({
 
   role: UserRole;
 
-  onFinalize: (row: DispatchListItem) => Promise<void>;
-
   onDelete: (row: DispatchListItem) => Promise<void>;
 
   onEdit: (row: DispatchListItem) => void;
 }) {
-  void onFinalize;
-
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
 
   const [sort, setSort] = useState<SortState | null>(null);
 
-  /*
-   * ============================================================
-   * FILTRADO
-   * ============================================================
-   */
-  const processedRows = useMemo(() => {
-    const has = (
-      value: string | number | null | undefined,
-
-      query: string,
-    ) =>
-      String(value ?? "")
-        .toLocaleLowerCase("es")
-        .includes(query.trim().toLocaleLowerCase("es"));
-
-    const filtered = rows.filter(
-      (row) =>
-        has(row.factura, filters.factura) &&
-        has(row.compania_nombre, filters.compania) &&
-        has(row.ruta_numero, filters.ruta) &&
-        has(row.estado, filters.estado) &&
-        has(row.responsable_nombre, filters.responsable) &&
-        has(row.transportista_nombre, filters.transportista),
-    );
-
-    /*
-     * Sin orden seleccionado:
-     * conservar orden original.
-     */
-    if (!sort) {
-      return filtered;
-    }
-
-    const activeSort = sort;
-
-    const sorted = [...filtered];
-
-    /*
-     * Fecha de inicio.
-     */
-    function getStart(row: DispatchListItem) {
-      if (!row.fecha_hora_inicio) {
-        return null;
-      }
-
-      const timestamp = new Date(row.fecha_hora_inicio).getTime();
-
-      return Number.isNaN(timestamp) ? null : timestamp;
-    }
-
-    /*
-     * Para cancelados usamos
-     * fecha_hora_cancelacion.
-     *
-     * Para despachadas:
-     * fecha_hora_final.
-     */
-    function getEnd(row: DispatchListItem) {
-      const value =
-        row.estado === "PEDIDO_CANCELADO"
-          ? row.fecha_hora_cancelacion
-          : row.fecha_hora_final;
-
-      if (!value) {
-        return null;
-      }
-
-      const timestamp = new Date(value).getTime();
-
-      return Number.isNaN(timestamp) ? null : timestamp;
-    }
-
-    /*
-     * Duración.
-     */
-    function getDuration(row: DispatchListItem) {
-      const start = getStart(row);
-
-      const end = getEnd(row);
-
-      if (start === null || end === null) {
-        return null;
-      }
-
-      return Math.max(0, end - start);
-    }
-
-    function getSortValue(row: DispatchListItem) {
-      switch (activeSort.key) {
-        case "iniciada":
-          return getStart(row);
-
-        case "terminada":
-          return getEnd(row);
-
-        case "duracion":
-          return getDuration(row);
-      }
-    }
-
-    sorted.sort((a, b) => {
-      const aValue = getSortValue(a);
-
-      const bValue = getSortValue(b);
-
-      /*
-       * Los valores vacíos siempre
-       * quedan al final.
-       */
-      if (aValue === null && bValue === null) {
-        return 0;
-      }
-
-      if (aValue === null) {
-        return 1;
-      }
-
-      if (bValue === null) {
-        return -1;
-      }
-
-      const result = aValue - bValue;
-
-      return activeSort.direction === "asc" ? result : -result;
-    });
-
-    return sorted;
-  }, [rows, filters, sort]);
+  const processedRows = useMemo(
+    () => filterAndSortDispatches(rows, filters, sort),
+    [rows, filters, sort],
+  );
 
   return (
     <div className="h-[calc(100vh-350px)] min-h-[360px] max-h-[calc(100vh-350px)] overflow-auto rounded-xl border border-white/8 bg-[#0B1626]/78 shadow-[0_16px_40px_rgba(0,0,0,.22)] backdrop-blur-xl">
