@@ -23,6 +23,7 @@ import {
   findAccountByEmail,
   resolveSupabaseTarget,
   ROLES,
+  setPassword,
   setProfileAccess,
   type Role,
 } from "./lib/supabase-local.mts";
@@ -157,15 +158,10 @@ async function main(): Promise<void> {
     case "reset-password": {
       const { account } = await existingAccount();
       const password = await askNewPassword(newPasswordSchema);
-      const { error } = await admin.auth.admin.updateUserById(account.id, {
-        password,
-      });
-      if (error) {
-        throw new Error(
-          `No fue posible cambiar la contraseña: ${error.message}`,
-        );
-      }
-      console.log(`Contraseña actualizada para ${account.email}.`);
+      await setPassword(admin, account.id, password);
+      console.log(
+        `Contraseña actualizada para ${account.email}; sus sesiones abiertas se cerraron.`,
+      );
       return;
     }
 

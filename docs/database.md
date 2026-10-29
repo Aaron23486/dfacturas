@@ -89,17 +89,18 @@ Migrations are applied in order by `npm run db:up` / `npm run db:reset` (local) 
 
 The repository currently contains five applied forward-only migrations:
 
-| Version                                        | Purpose                                                                                                               |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `20260930000001_initial_schema.sql`            | relational baseline, enums, constraints, indexes and validation triggers                                              |
-| `20260930000002_security_audit.sql`            | profiles, auth helpers, RLS, grants and audit logging                                                                 |
-| `20260930000003_dispatch_rpcs.sql`             | transactional dispatch RPCs                                                                                           |
-| `20261002000004_original_ui_compatibility.sql` | compatibility/admin RPCs and dashboard analytics/export functions                                                     |
-| `20261004000005_security_hardening.sql`        | least-privilege hardening, inactive-by-default users, soft-delete visibility, text limits and stricter RPC validation |
-| `20261029000006_realtime_dispatch_feed.sql`    | adds `despachos` to the `supabase_realtime` publication so the live history receives events                           |
-| `20261029000007_keep_an_active_admin.sql`      | trigger that rejects demoting, deactivating or deleting the last active `ADMIN`                                       |
-| `20261029000008_require_live_session.sql`      | `has_live_session()`; `is_active_user()` and `current_user_role()` require the token's Auth session to exist          |
-| `20261029000009_audit_and_limit_exports.sql`   | `dashboard_exports`; export limited to 366 days and recorded; query moved to an internal function                     |
+| Version                                                  | Purpose                                                                                                                                            |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260930000001_initial_schema.sql`                      | relational baseline, enums, constraints, indexes and validation triggers                                                                           |
+| `20260930000002_security_audit.sql`                      | profiles, auth helpers, RLS, grants and audit logging                                                                                              |
+| `20260930000003_dispatch_rpcs.sql`                       | transactional dispatch RPCs                                                                                                                        |
+| `20261002000004_original_ui_compatibility.sql`           | compatibility/admin RPCs and dashboard analytics/export functions                                                                                  |
+| `20261004000005_security_hardening.sql`                  | least-privilege hardening, inactive-by-default users, soft-delete visibility, text limits and stricter RPC validation                              |
+| `20261029000006_realtime_dispatch_feed.sql`              | adds `despachos` to the `supabase_realtime` publication so the live history receives events                                                        |
+| `20261029000007_keep_an_active_admin.sql`                | trigger that rejects demoting, deactivating or deleting the last active `ADMIN`                                                                    |
+| `20261029000008_require_live_session.sql`                | `has_live_session()`; `is_active_user()` and `current_user_role()` require the token's Auth session to exist                                       |
+| `20261029000009_audit_and_limit_exports.sql`             | `dashboard_exports`; export limited to 366 days and recorded; query moved to an internal function                                                  |
+| `20261029000010_password_changes_only_from_terminal.sql` | trigger on `auth.users` that only accepts password changes from `terminal_set_password()` (service role), which also closes the account's sessions |
 
 ### Rule: migrations are immutable after application
 

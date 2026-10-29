@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Security
+
+- Passwords can only be changed from the terminal (`users -- reset-password`): the database rejects changes made with a session or through the Auth admin API, and a reset closes the account's open sessions (migration 010).
+
 ## [1.0.0] - 2026-10-29
 
 ### Added
