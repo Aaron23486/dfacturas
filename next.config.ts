@@ -2,18 +2,29 @@ import type { NextConfig } from "next";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
+// El navegador habla directamente con Supabase (datos, RPC y Realtime), así que
+// connect-src debe permitir el origen configurado, también el local por http/ws.
+function supabaseOrigins(url: string | undefined): string {
+  if (!url) return "https://*.supabase.co wss://*.supabase.co";
+  const { origin, protocol, host } = new URL(url);
+  return `${origin} ${protocol === "https:" ? "wss:" : "ws:"}//${host}`;
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const servesOverHttps = !supabaseUrl?.startsWith("http:");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? " ws: http: https:" : ""}`,
+  `connect-src 'self' ${supabaseOrigins(supabaseUrl)}${isDevelopment ? " ws: http: https:" : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
+  ...(isDevelopment || !servesOverHttps ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [
