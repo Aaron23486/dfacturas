@@ -203,4 +203,4 @@ Controls, how they are tested and the remaining risks are in [docs/security.md](
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © 2026 Aaron23486

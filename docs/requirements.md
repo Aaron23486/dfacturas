@@ -36,19 +36,19 @@ Accounts are provisioned from the terminal; there is no public sign-up.
 
 ## Business rules
 
-| ID   | Rule                                                                                                                                                             |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R-1  | An invoice number has exactly 20 digits; spaces are ignored and anything else is rejected.                                                                       |
-| R-2  | Only one active (not soft-deleted) dispatch may exist per invoice, including under concurrent scans.                                                             |
-| R-3  | A route requires its company, and must belong to it.                                                                                                             |
-| R-4  | A plate requires its carrier, and must belong to it; a regular carrier needs an active plate.                                                                    |
-| R-5  | `CLIENTE RETIRA` (customer pickup) is a single special carrier that never has a plate.                                                                           |
-| R-6  | `ATENDIENDO` has a start time only; `DESPACHADA` has start and end; `PEDIDO_CANCELADO` has a cancellation time and a reason. Times come from the database clock. |
-| R-7  | Free-text detail and deletion reasons are limited to 1,000 characters.                                                                                           |
-| R-8  | New Auth identities start as inactive `OPERATIVO` profiles; roles never come from client metadata.                                                               |
-| R-9  | At least one active `ADMIN` must always exist.                                                                                                                   |
-| R-10 | An operator may soft-delete only dispatches in `ATENDIENDO`; closed dispatches require an administrator and a reason.                                            |
-| R-11 | Passwords are set only from the terminal; signed-in sessions cannot change them, and a reset closes the account's sessions.                                      |
+| ID   | Rule                                                                                                                                                                                                                                               |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-1  | An invoice number has exactly 20 digits; spaces are ignored and anything else is rejected.                                                                                                                                                         |
+| R-2  | Only one active (not soft-deleted) dispatch may exist per invoice, including under concurrent scans.                                                                                                                                               |
+| R-3  | A route requires its company, and must belong to it.                                                                                                                                                                                               |
+| R-4  | A plate requires its carrier, and must belong to it; a regular carrier needs an active plate.                                                                                                                                                      |
+| R-5  | `CLIENTE RETIRA` (customer pickup) is a single special carrier that never has a plate.                                                                                                                                                             |
+| R-6  | `ATENDIENDO` has a start time only; `DESPACHADA` has start and end; `PEDIDO_CANCELADO` has a cancellation time and a reason. Times come from the database clock.                                                                                   |
+| R-7  | Free-text detail and deletion reasons are limited to 1,000 characters.                                                                                                                                                                             |
+| R-8  | New Auth identities start as inactive `OPERATIVO` profiles; roles never come from client metadata.                                                                                                                                                 |
+| R-9  | At least one active `ADMIN` must always exist.                                                                                                                                                                                                     |
+| R-10 | An operator may soft-delete any dispatch still in `ATENDIENDO`, including one started by another user, without a reason (an automatic reason is stored; the author and time are audited). Closed dispatches require an administrator and a reason. |
+| R-11 | Passwords are set only from the terminal; signed-in sessions cannot change them, and a reset closes the account's sessions.                                                                                                                        |
 
 ## Non-functional requirements
 
