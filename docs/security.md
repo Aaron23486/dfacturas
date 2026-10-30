@@ -57,13 +57,12 @@ The browser is untrusted: it holds the user's session and talks to Supabase dire
 
 ## Residual risks and accepted limitations
 
-| Risk                                                                                                                        | Mitigation                                                                                    |
-| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| The session cookie is readable by JavaScript (browser client design).                                                       | Nonce CSP, 12 h lifetime, immediate revocation.                                               |
-| Login throttling relies on Supabase Auth's per-IP limits (`sign_in_sign_ups`, 30 per 5 minutes locally); the app adds none. | Enable CAPTCHA on the hosted project if it is exposed publicly.                               |
-| The Auth recovery and magic-link endpoints are enabled but unused by the UI.                                                | Keep email rate limits low; customize or disable those templates on a hosted project.         |
-| Authenticated users can read the PostgREST OpenAPI description (function names).                                            | No secrets in it; disable `pg_graphql` on hosted projects if unused.                          |
-| The local Supabase publishes PostgreSQL, Studio and Mailpit on all interfaces.                                              | Development only: use trusted networks and stop it with `npm run db:down`.                    |
-| An operator can soft-delete any dispatch still in `ATENDIENDO` without giving a reason (an automatic reason is stored).     | Business rule kept as designed; the author and time are recorded in the row and `audit_logs`. |
+| Risk                                                                                                                        | Mitigation                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| The session cookie is readable by JavaScript (browser client design).                                                       | Nonce CSP, 12 h lifetime, immediate revocation.                                       |
+| Login throttling relies on Supabase Auth's per-IP limits (`sign_in_sign_ups`, 30 per 5 minutes locally); the app adds none. | Enable CAPTCHA on the hosted project if it is exposed publicly.                       |
+| The Auth recovery and magic-link endpoints are enabled but unused by the UI.                                                | Keep email rate limits low; customize or disable those templates on a hosted project. |
+| Authenticated users can read the PostgREST OpenAPI description (function names).                                            | No secrets in it; disable `pg_graphql` on hosted projects if unused.                  |
+| The local Supabase publishes PostgreSQL, Studio and Mailpit on all interfaces.                                              | Development only: use trusted networks and stop it with `npm run db:down`.            |
 
 No review guarantees the absence of vulnerabilities; these controls reduce risk and are covered by the tests listed in [testing.md](testing.md).
